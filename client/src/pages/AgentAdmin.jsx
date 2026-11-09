@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { authRequest } from '../services/auth.js';
+import { getSupabase } from '../services/supabase.js';
 import '../styles/AgentAdmin.css';
 
 export default function AgentAdmin() {
@@ -16,7 +17,13 @@ export default function AgentAdmin() {
     authRequest('/api/admin/me').then(data => { if (active) setAgent(data.agent); })
       .catch(error => { if (active && error.status !== 401) setError(error.message); })
       .finally(() => { if (active) setChecking(false); });
-    return () => { active = false; };
+    let subscription;
+    try {
+      ({ data: { subscription } } = getSupabase().auth.onAuthStateChange(event => {
+        if (active && event === 'SIGNED_OUT') setAgent(null);
+      }));
+    } catch { /* Missing configuration is reported by authRequest above. */ }
+    return () => { active = false; subscription?.unsubscribe(); };
   }, [attempt]);
   async function login(event) {
     event.preventDefault(); setBusy(true); setError('');
@@ -33,7 +40,7 @@ export default function AgentAdmin() {
   async function refreshSession() {
     setBusy(true); setError('');
     try { const data = await authRequest('/api/admin/me'); setAgent(data.agent); }
-    catch (error) { if (error.status === 401) setAgent(null); setError(error.message); }
+    catch (error) { if (error.status === 401 || error.status === 403) setAgent(null); setError(error.message); }
     finally { setBusy(false); }
   }
   return <div className="agent-admin">
@@ -46,9 +53,9 @@ export default function AgentAdmin() {
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           <div className="admin-modules"><article><span className="admin-label">NEXT STEP</span><h2>About Me</h2><p>Your profile and biography editor will be added here.</p><a href="#/about">View current page ↗</a></article><article><span className="admin-label">NEXT STEP</span><h2>Contact information</h2><p>Your phone, email, and contact editor will be added here.</p><a href="#/contact">View current page ↗</a></article></div>
         </section>
-      </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Local demo</div></section>
-      <section className="admin-login-card"><span className="admin-label">AGENT ACCESS</span><h2>Welcome back.</h2><p>Enter the agent ID and password created by your administrator.</p>
-        <form onSubmit={login}><label htmlFor="agent-id">Agent ID</label><input id="agent-id" name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" maxLength={40} required value={id} onChange={event => setId(event.target.value)} placeholder="e.g. agent001" />
+      </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>
+      <section className="admin-login-card"><span className="admin-label">AGENT ACCESS</span><h2>Welcome back.</h2><p>Enter the email and password created in Supabase Authentication.</p>
+        <form onSubmit={login}><label htmlFor="agent-id">Email address</label><input id="agent-id" type="email" name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" maxLength={254} required value={id} onChange={event => setId(event.target.value)} placeholder="you@example.com" />
           <label htmlFor="agent-password">Password</label><div className="admin-password"><input id="agent-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} /><button type="button" aria-controls="agent-password" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</button></div>
           {error && <div className="admin-error" role="alert">{error}</div>}
           <button className="admin-primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in →'}</button>
