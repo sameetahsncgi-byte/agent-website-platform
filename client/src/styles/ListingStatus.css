@@ -1,0 +1,12 @@
+/* Extra status field on the API listings page. */
+.search-panel.has-status-filter {
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 170px) minmax(160px, 210px) auto;
+  gap: 20px;
+}
+@media (max-width: 1050px) {
+  .search-panel.has-status-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .search-panel.has-status-filter .button { grid-column: auto; }
+}
+@media (max-width: 500px) {
+  .search-panel.has-status-filter { grid-template-columns: minmax(0, 1fr); }
+}

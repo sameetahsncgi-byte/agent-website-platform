@@ -1,0 +1,11 @@
+/* Home page only. */
+.hero { display: grid; grid-template-columns: 1fr 1.08fr; min-height: 480px; background: #eaece4; }
+.hero-content { align-self: center; padding: 60px 35px 60px max(5vw, calc((100vw - 1120px) / 2)); }
+.hero-content h1 { max-width: 470px; }
+.hero-content p { max-width: 350px; margin-bottom: 28px; color: #5d6b60; font-size: 14px; }
+.hero-image { position: relative; min-height: 350px; background: #d8dfd2; }
+.hero-image img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.image-caption { position: absolute; right: 22px; bottom: 22px; padding: 10px 15px; background: #faf9f5ed; font-size: 12px; }
+.home-about { padding-block: 65px; background: #eef0e8; }
+@media (max-width: 850px) { .hero { grid-template-columns: 1fr; } .hero-content { padding: 45px 6%; } .hero-image { min-height: 330px; } }
+@media (max-width: 500px) { .hero-content { padding-block: 35px; } .hero-image { min-height: 260px; } .home-about { padding-block: 45px; } }

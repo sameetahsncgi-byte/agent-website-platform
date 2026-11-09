@@ -1,0 +1,8 @@
+/* About Me page only. */
+.about-page { padding-block: 65px; }
+.values-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 65px; }
+.values-grid article { padding: 27px; border-top: 2px solid var(--green); background: #eef0e8; }
+.values-grid h3 { margin-top: 17px; font-size: 18px; }
+.values-grid p { margin-bottom: 0; color: var(--muted); font-size: 14px; }
+@media (max-width: 850px) { .values-grid { grid-template-columns: 1fr; gap: 20px; margin-top: 40px; } }
+@media (max-width: 500px) { .about-page { padding-block: 40px; } }

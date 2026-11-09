@@ -1,0 +1,28 @@
+/* Shared by homepage, active listings, sold listings and property details. */
+.search-panel { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 230px auto; align-items: end; gap: 25px; margin-top: -25px; padding: 25px; border: 1px solid var(--border); background: white; box-shadow: 0 8px 30px #1d382c0a; }
+.search-panel label { min-width: 0; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.search-panel input, .search-panel select { display: block; width: 100%; padding: 10px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: white; color: var(--dark-green); font-size: 14px; }
+.properties-section { padding-block: 70px; scroll-margin-top: 20px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.section-heading p, .results-count { color: var(--muted); font-size: 13px; }
+.results-count { white-space: nowrap; }
+.properties-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.property-card { overflow: hidden; border: 1px solid var(--border); background: white; }
+.property-image { position: relative; aspect-ratio: 1.5; overflow: hidden; background: #d8dfd2; }
+.property-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+.property-card:hover .property-image img { transform: scale(1.04); }
+.property-badge { position: absolute; top: 14px; left: 14px; padding: 4px 10px; background: #fffffff0; font-size: 11px; }
+.save-button { position: absolute; top: 11px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: white; color: var(--green); font-size: 23px; }
+.property-content { padding: 22px; }
+.property-price { margin: 0; font-size: 24px; font-weight: 600; }
+.property-content h3 { margin: 9px 0 2px; font-size: 14px; }
+.property-city { margin: 0 0 17px; color: var(--muted); font-size: 12px; }
+.property-features { display: flex; flex-wrap: wrap; gap: 16px; padding-bottom: 17px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.property-link { display: flex; justify-content: space-between; width: 100%; padding: 15px 0 0; border: 0; background: transparent; color: var(--green); font-size: 13px; }
+.empty-state { padding: 40px; background: #edf0e8; text-align: center; }
+.sold-badge { background: var(--green); color: white; }
+.price-caption { color: var(--muted); font-size: 10px; letter-spacing: 1px; }
+.sold-date { margin: 12px 0 0; color: var(--muted); font-size: 11px; }
+@media (max-width: 850px) { .search-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 20px; } .search-panel .button { grid-column: 1 / -1; } .properties-grid { grid-template-columns: 1fr; } .property-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .property-image { height: 100%; min-height: 240px; aspect-ratio: auto; } }
+@media (max-width: 500px) { .search-panel { grid-template-columns: 1fr; padding: 20px; } .search-panel input, .search-panel select { font-size: 16px; } .section-heading { flex-direction: column; align-items: flex-start; gap: 10px; } .property-card { display: block; } .property-image { min-height: 0; aspect-ratio: 1.5; } .properties-section { padding-block: 45px; } }
+@media (prefers-reduced-motion: reduce) { .property-image img { transition: none; } }
