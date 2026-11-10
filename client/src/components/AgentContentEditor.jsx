@@ -1,4 +1,4 @@
-import { websiteHref } from '../services/siteRouting.js';
+import { agentWebsiteHref } from '../services/siteRouting.js';
 import { useEffect, useRef, useState } from 'react';
 import ThemePicker from './ThemePicker.jsx';
 import { defaultContent, fields, imageUrl, loadContent, prepareImage, saveContent } from '../services/siteContent.js';
@@ -83,7 +83,7 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
     try {
       const result = await saveContent(agent.siteId, form, files, baseline);
       setForm(result.content); setBaseline(result.content); setFiles({}); setPublished(true);
-      setMessage(result.cleanupWarning ? 'Published successfully. An old image could not be removed; contact your administrator to clean it up.' : 'Published successfully. Your website now shows the saved details.');
+      setMessage(result.cleanupWarning ? 'Published successfully. An old image could not be removed; contact your administrator to clean it up.' : 'Saved successfully. Your enabled website shows the saved details.');
     } catch (error) { setError(error.message); }
     finally { setSaving(false); }
   }
@@ -110,10 +110,10 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
           </label>)}</div>
         </div>
       </fieldset>
-      <p className="editor-publish-note">Save & Publish saves both sections and makes your changes public immediately. Your contact email is public and does not change your login email.</p>
+      <p className="editor-publish-note">Save & Publish saves both sections. Enabled websites show the saved changes immediately. Your contact email is public and does not change your login email.</p>
       {error && <p className="admin-error" role="alert">{error}</p>}
       {message && <p className="editor-success" role="status">{message}</p>}
-      <div className="editor-actions"><button className="admin-primary" type="submit" disabled={saving || processingImage || !dirty}>{saving ? 'Publishing…' : 'Save & Publish'}</button><button className="admin-secondary" type="button" onClick={discard} disabled={saving || processingImage || !dirty}>Discard changes</button><a href={websiteHref(agent.siteId, section === 'about' ? 'about' : 'contact')} target="_blank" rel="noopener noreferrer">View live page ↗</a></div>
+      <div className="editor-actions"><button className="admin-primary" type="submit" disabled={saving || processingImage || !dirty}>{saving ? 'Publishing…' : 'Save & Publish'}</button><button className="admin-secondary" type="button" onClick={discard} disabled={saving || processingImage || !dirty}>Discard changes</button><a href={agentWebsiteHref(agent, section === 'about' ? 'about' : 'contact')} target="_blank" rel="noopener noreferrer">View live page ↗</a></div>
     </form>
   </section>;
 }

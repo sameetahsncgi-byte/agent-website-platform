@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react';
+import { adminPlatformRequest } from '../services/platformApi.js';
+import { agentWebsiteHref } from '../services/siteRouting.js';
+
+function WebsiteRow({ website, busy, save }) {
+  const [hostname, setHostname] = useState(website.hostname || '');
+  const live = website.active && website.enabled;
+  return <article className="website-control-row">
+    <div><h3>{website.name}</h3><small>{website.site_id}</small><p><strong>{!website.active ? 'Account setup pending or access disabled' : live ? 'Website enabled' : 'Website disabled'}</strong></p>
+      <button className="admin-secondary" type="button" disabled={busy} onClick={() => {
+        if (website.enabled && !window.confirm(`Disable ${website.name}’s public website? Their account and content will be kept.`)) return;
+        save({ action: 'set-enabled', siteId: website.site_id, enabled: !website.enabled });
+      }}>{website.enabled ? 'Disable website' : 'Enable website'}</button>
+      {live && <p><a href={agentWebsiteHref({ siteId: website.site_id, hostname: website.hostname })} target="_blank" rel="noopener noreferrer">Visit website ↗</a></p>}
+    </div>
+    <form onSubmit={event => { event.preventDefault(); save({ action: 'set-hostname', siteId: website.site_id, hostname }); }}>
+      <label htmlFor={`hostname-${website.site_id}`}>Website hostname</label>
+      <input id={`hostname-${website.site_id}`} value={hostname} onChange={event => setHostname(event.target.value)} placeholder="yasir-agent-website-platform.vercel.app" required maxLength={253} autoComplete="off" autoCapitalize="none" spellCheck={false} disabled={busy}/>
+      <div className="website-control-actions"><button className="admin-secondary" disabled={busy} type="submit">Save hostname</button>
+      {website.hostname && <button className="admin-secondary" disabled={busy} type="button" onClick={() => {
+        if (window.confirm('Remove this hostname mapping? The original platform link will still work if the website is enabled.')) save({ action: 'remove-hostname', siteId: website.site_id });
+      }}>Remove mapping</button>}</div>
+      <p className="platform-help">Add this exact hostname to this project in Vercel → Settings → Domains, connected to Production. Saving here maps the address; it does not register or verify it in Vercel.</p>
+    </form>
+  </article>;
+}
+export default function WebsiteManager() {
+  const [websites, setWebsites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setLoading(true); setError('');
+    adminPlatformRequest('/api/platform/websites').then(data => { if (active) setWebsites(data.websites); })
+      .catch(error => { if (active) setError(error.message); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [revision]);
+  async function save(body) {
+    setBusy(true); setError(''); setMessage('');
+    try {
+      const { website } = await adminPlatformRequest('/api/platform/websites', body);
+      setWebsites(current => current.map(row => row.site_id === website.site_id ? { ...row, ...website } : row));
+      setMessage(body.action === 'set-hostname' ? 'Hostname mapping saved. Confirm the address is connected to Production in Vercel before sharing it.' : body.action === 'remove-hostname' ? 'Hostname mapping removed. Remove the unused address in Vercel too if it is no longer needed.' : body.enabled ? 'Website enabled. Account setup must also be complete.' : 'Public website disabled. Agent login and content are preserved. Open pages recheck within about 30 seconds when visible, or on refresh.');
+    } catch (error) { setError(error.message); }
+    finally { setBusy(false); }
+  }
+  return <section className="platform-agents" aria-label="Website management"><div className="admin-account">
+    <div className="platform-table-heading"><h2>Website management</h2><button type="button" className="admin-secondary" disabled={busy || loading} onClick={() => setRevision(value => value + 1)}>Refresh websites</button></div>
+    <p>Manage every agent’s public address and publishing status. Disabling a website keeps the account and editor available.</p>
+    {message && <p role="status">{message}</p>}{error && <p className="admin-error" role="alert">{error}</p>}
+    {loading ? <p role="status">Loading websites…</p> : websites.map(website => <WebsiteRow key={`${website.site_id}-${website.hostname}`} website={website} busy={busy} save={save}/>)}
+    {!loading && !websites.length && !error && <p>No agent websites found.</p>}
+  </div></section>;
+}

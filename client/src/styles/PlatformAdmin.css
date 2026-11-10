@@ -22,3 +22,9 @@
 .agent-admin .platform-onboarding fieldset {border:0;margin:0;padding:0;min-width:0;}
 .agent-admin .platform-onboarding a.admin-primary {text-align:center;}
 @media(max-width:650px){.agent-admin .platform-fields{grid-template-columns:1fr;}.agent-admin .platform-submit{width:100%;min-width:0;}.agent-admin .platform-onboarding{margin-top:30px;}.agent-admin .platform-link-result{padding:20px;}}
+
+.website-control-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr); gap: 28px; border-top: 1px solid #dce5de; padding-block: 26px; }
+.website-control-row h3 { margin-top: 0; }
+.website-control-row small { overflow-wrap: anywhere; }
+.website-control-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+@media (max-width: 700px) { .website-control-row { grid-template-columns: minmax(0, 1fr); } }

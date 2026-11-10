@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAdminSupabase } from '../services/adminSupabase.js';
 import { platformAuth } from '../services/platformAuth.js';
 import '../styles/AgentAdmin.css';
+import WebsiteManager from '../components/WebsiteManager.jsx';
 import AgentManager from '../components/AgentManager.jsx';
 import '../styles/PlatformAdmin.css';
 
@@ -73,6 +74,7 @@ export default function SuperAdmin() {
           </div>
         </div>
         <AgentManager key={admin.id} />
+        <WebsiteManager key={`websites-${admin.id}`} />
       </main> : <main className="admin-login-layout">
         <section className="admin-login-intro">
           <span className="admin-label">PLATFORM MANAGEMENT</span><h1>One workspace.<br/>Every agent.</h1>

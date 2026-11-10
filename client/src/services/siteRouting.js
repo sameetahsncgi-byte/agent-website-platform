@@ -19,3 +19,14 @@ export function websiteHref(siteId, page = 'home', pathname = window.location.pa
   if (!/^[a-z]+(?:-[a-z]+)*$/.test(page)) throw Error('Invalid page.');
   return `${pathname}?${new URLSearchParams({ site: siteId })}#/${page}`;
 }
+
+export const PLATFORM_HOSTNAME = import.meta.env?.VITE_PLATFORM_HOSTNAME || 'agent-website-platform.vercel.app';
+export function agentWebsiteHref(agent, page = 'home', location = window.location) {
+  if (agent.hostname) {
+    // hostname comes from the read-only, administrator-managed settings table.
+    if (!/^[a-z]+(?:-[a-z]+)*$/.test(page)) throw Error('Invalid page.');
+    return `https://${agent.hostname}/#/${page}`;
+  }
+  const origin = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) ? location.origin : `https://${PLATFORM_HOSTNAME}`;
+  return `${origin}${websiteHref(agent.siteId, page, '/')}`;
+}

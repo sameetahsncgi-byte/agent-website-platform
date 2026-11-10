@@ -21,7 +21,10 @@ export function makeAuthRequest(getClient) {
       await client.auth.signOut({ scope: 'local' });
       throw authError('Agent access has not been enabled for this account. Contact your administrator.', 403);
     }
-    return { agent: { id: profile.agent_id, name: profile.name, role: profile.role, siteId: profile.site_id } };
+    const { data: settings, error: settingsError } = await client.from('agent_website_settings')
+      .select('hostname, enabled').eq('site_id', profile.site_id).maybeSingle();
+    if (settingsError) throw authError('Unable to load website settings. Ask your administrator to run setup-website-controls.sql.', 503);
+    return { agent: { id: profile.agent_id, name: profile.name, role: profile.role, siteId: profile.site_id, hostname: settings?.hostname || null, websiteEnabled: settings?.enabled ?? true } };
   }
   return async function request(path, body) {
     const client = getClient();
