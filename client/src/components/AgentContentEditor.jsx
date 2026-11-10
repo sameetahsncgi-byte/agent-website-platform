@@ -1,6 +1,7 @@
+import { websiteHref } from '../services/siteRouting.js';
 import { useEffect, useRef, useState } from 'react';
 import ThemePicker from './ThemePicker.jsx';
-import { defaultContent, fields, imageUrl, loadContent, prepareImage, saveContent, SITE_ID } from '../services/siteContent.js';
+import { defaultContent, fields, imageUrl, loadContent, prepareImage, saveContent } from '../services/siteContent.js';
 
 const sections = {
   about: ['name', 'professionalTitle', 'headline', 'bio', 'aboutTitle', 'aboutIntro', 'aboutStory'],
@@ -93,7 +94,6 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
   if (loadFailed) return <div className="admin-account"><p role="alert" className="admin-error">{error}</p><button className="admin-secondary" onClick={() => setRetry(value => value + 1)}>Try loading again</button></div>;
   return <section className="content-editor" aria-label="Website content editor">
     <div className="editor-heading"><div><span className="admin-label">WEBSITE CONTENT</span><h2>Make it yours.</h2><p>Edit your details, then publish them to your website.</p></div><span className={`editor-state ${dirty ? 'has-changes' : ''}`}>{!published ? 'Not published yet' : dirty ? 'Unsaved changes' : 'All changes saved'}</span></div>
-    {agent.siteId !== SITE_ID && <p className="admin-error">This deployment displays {SITE_ID}. You are editing {agent.siteId}; use that site’s deployment to view your published changes.</p>}
     <div className="editor-tabs" role="tablist" aria-label="Content sections">{Object.keys(sections).map(key => <button key={key} id={`tab-${key}`} role="tab" aria-selected={section === key} aria-controls="editor-panel" type="button" disabled={processingImage || saving} onClick={() => setSection(key)}>{key === 'about' ? 'About Me' : 'Contact & branding'}</button>)}</div>
     <form onSubmit={publish}>
       <fieldset disabled={saving}>
@@ -113,7 +113,7 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
       <p className="editor-publish-note">Save & Publish saves both sections and makes your changes public immediately. Your contact email is public and does not change your login email.</p>
       {error && <p className="admin-error" role="alert">{error}</p>}
       {message && <p className="editor-success" role="status">{message}</p>}
-      <div className="editor-actions"><button className="admin-primary" type="submit" disabled={saving || processingImage || !dirty}>{saving ? 'Publishing…' : 'Save & Publish'}</button><button className="admin-secondary" type="button" onClick={discard} disabled={saving || processingImage || !dirty}>Discard changes</button><a href={section === 'about' ? '#/about' : '#/contact'} target="_blank" rel="noopener noreferrer">View live page ↗</a></div>
+      <div className="editor-actions"><button className="admin-primary" type="submit" disabled={saving || processingImage || !dirty}>{saving ? 'Publishing…' : 'Save & Publish'}</button><button className="admin-secondary" type="button" onClick={discard} disabled={saving || processingImage || !dirty}>Discard changes</button><a href={websiteHref(agent.siteId, section === 'about' ? 'about' : 'contact')} target="_blank" rel="noopener noreferrer">View live page ↗</a></div>
     </form>
   </section>;
 }

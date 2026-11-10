@@ -1,3 +1,4 @@
+import { websiteHref } from '../services/siteRouting.js';
 import { useEffect, useState } from 'react';
 import { adminPlatformRequest } from '../services/platformApi.js';
 import '../styles/PlatformAdmin.css';
@@ -53,7 +54,7 @@ export default function AgentManager() {
           <label>Login email<input type="email" value={form.email} onChange={e=>update('email',e.target.value)} required maxLength={254} autoComplete="off" placeholder="agent@example.com"/></label>
           <label>Website handle<input value={form.slug} onChange={e=>update('slug',e.target.value.toLowerCase())} required minLength={3} maxLength={40} pattern="[a-z0-9][a-z0-9-]{1,38}[a-z0-9]" autoCapitalize="none" spellCheck={false} autoComplete="off" placeholder="jordan-muse"/></label>
         </fieldset>
-        <p className="platform-help">The handle reserves their website identity. Public domains and subdomains will be connected in the next step.</p>
+        <p className="platform-help">Each agent gets a separate website address on this deployment. Custom domains and subdomains can be connected later.</p>
         <button className="admin-primary platform-submit" type="submit" disabled={busy}>{busy ? 'Working…' : 'Create agent & generate link'}</button>
       </form>
     </div>
@@ -71,9 +72,9 @@ export default function AgentManager() {
       {listError && <p className="admin-error" role="alert">{listError}</p>}
       {!loading && !listError && !agents.length && <p>No agents created through this onboarding flow yet. Existing manually created agents remain unchanged.</p>}
       {!loading && !listError && agents.length > 0 && <div className="platform-table-scroll"><table><thead><tr><th>Agent</th><th>Website handle</th><th>Status</th><th>Action</th></tr></thead><tbody>{agents.map(agent=><tr key={agent.user_id}>
-        <td><strong>{agent.name}</strong><small>{agent.email}</small></td><td>{agent.site_slug}</td><td><span className={`platform-status ${agent.status}`}>{agent.status === 'active' ? 'Account ready' : 'Invited / setup pending'}</span></td><td>{agent.status === 'invited' ? <button type="button" className="admin-secondary" disabled={busy} onClick={()=>newLink(agent)}>New link</button> : 'Setup complete'}</td>
+        <td><strong>{agent.name}</strong><small>{agent.email}</small></td><td>{agent.site_slug}</td><td><span className={`platform-status ${agent.status}`}>{agent.status === 'active' ? 'Account ready' : 'Invited / setup pending'}</span></td><td>{agent.status === 'invited' ? <button type="button" className="admin-secondary" disabled={busy} onClick={()=>newLink(agent)}>New link</button> : <a href={websiteHref(agent.site_id)} target="_blank" rel="noopener noreferrer">Visit website ↗</a>}</td>
       </tr>)}</tbody></table></div>}
-      <p className="platform-help">Account ready means the invitation was accepted and a password was set. It does not mean a public domain is connected.</p>
+      <p className="platform-help">Account ready means the invitation was accepted and a password was set. Visit website opens that agent’s public website; custom domains are not connected yet.</p>
     </div>
   </section>;
 }

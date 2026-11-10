@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { websiteHref } from '../services/siteRouting.js';
 import { authRequest } from '../services/auth.js';
 import { getSupabase } from '../services/supabase.js';
 import '../styles/AgentAdmin.css';
@@ -48,13 +49,13 @@ export default function AgentAdmin() {
     finally { setBusy(false); }
   }
   return <div className="agent-admin">
-    <header className="admin-topbar"><a href="#/home" className="admin-wordmark"><span>SA</span> Agent workspace</a><a href="#/home" target="_blank" rel="noopener noreferrer">View website ↗</a></header>
+    <header className="admin-topbar"><span className="admin-wordmark"><span>SA</span> Agent workspace</span>{agent && <a href={websiteHref(agent.siteId)} target="_blank" rel="noopener noreferrer">View my website ↗</a>}</header>
     {checking ? <main className="admin-loading" role="status">Checking your session…</main> : agent ?
       <main className="admin-workspace">
-        <aside className="admin-sidebar"><span className="admin-label">WORKSPACE</span><a href="#/admin" aria-current="page">Website editor</a><a href="#/about" target="_blank" rel="noopener noreferrer">View About Me ↗</a><a href="#/contact" target="_blank" rel="noopener noreferrer">View Contact ↗</a><p>Signed in as<br/><strong>{agent.id}</strong></p><button onClick={logout} disabled={busy} className="admin-secondary">{busy ? 'Please wait…' : 'Log out'}</button></aside>
+        <aside className="admin-sidebar"><span className="admin-label">WORKSPACE</span><a href="#/admin" aria-current="page">Website editor</a><a href={websiteHref(agent.siteId, 'about')} target="_blank" rel="noopener noreferrer">View About Me ↗</a><a href={websiteHref(agent.siteId, 'contact')} target="_blank" rel="noopener noreferrer">View Contact ↗</a><p>Signed in as<br/><strong>{agent.id}</strong></p><button onClick={logout} disabled={busy} className="admin-secondary">{busy ? 'Please wait…' : 'Log out'}</button></aside>
         <section className="admin-overview"><span className="admin-label">YOUR AGENT PORTAL</span><h1>Welcome, {agent.name}.</h1><p>Manage your About Me page, contact details, and website images.</p>
           {error && <p role="alert" className="admin-error">{error}</p>}
-          <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
+          <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={websiteHref(agent.siteId)} target="_blank" rel="noopener noreferrer">{window.location.origin}{websiteHref(agent.siteId)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
         </section>
       </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>

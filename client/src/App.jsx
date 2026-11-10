@@ -42,11 +42,18 @@ export default function App() {
   if (page === 'super-admin') return <SuperAdmin />;
   if (page === 'admin' || page === 'login') return <AgentAdmin />;
 
+  // Never render the default agent while another site's content is loading,
+  // missing, inactive, or unavailable. Admin routes above remain accessible.
+  if (agent.contentStatus !== 'ready') return <main className="container" style={{ paddingBlock: 80 }}>
+    <h1>{agent.contentStatus === 'loading' ? 'Loading website…' : agent.contentStatus === 'missing' ? 'Website unavailable' : 'Unable to load this website'}</h1>
+    <p role="status">{agent.contentStatus === 'loading' ? 'Getting this agent’s website details.' : agent.contentStatus === 'missing' ? 'Check the website address or contact the agent. This website may not be active yet.' : 'Check the website address and your connection, then try again.'}</p>
+    {agent.contentStatus === 'error' && <button className="button" onClick={() => window.location.reload()}>Try again</button>}
+    <p><a href="#/admin">Agent sign in</a></p>
+  </main>;
+
   return (
     <div className="website-theme" data-theme={agent.themeKey || 'forest'} style={themeVariables(agent.themeKey)}>
       <div className="demo-bar">Demo website · Sample listings · No live MLS feed</div>
-      {agent.contentStatus === 'error' && <div className="content-notice" role="status">Website details could not be loaded. Showing demo information. Please try again shortly.</div>}
-      {agent.contentStatus === 'missing' && <div className="content-notice">Sample agent details · Sign in to publish your profile.</div>}
       <Header page={page} />
       <main id="main-content" key={`page-${routeKey}`}>
         {pages[page] || <><PageIntro eyebrow="PAGE NOT FOUND" title="Let’s get you back home." description="This demo page does not exist." /><div className="container not-found"><a className="button" href="#/home">Return home ↗</a></div></>}

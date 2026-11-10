@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase.js';
 import { agent as defaults } from '../data/agent.js';
+import { selectedSiteId } from './siteRouting.js';
 import { THEMES } from '../data/themes.js';
 
 export const SITE_ID = import.meta.env?.VITE_AGENT_SITE_ID || 'site-agent001';
@@ -52,7 +53,7 @@ export function validateContent(value) {
 export function imageUrl(path) {
   return path ? getSupabase().storage.from(BUCKET).getPublicUrl(path).data.publicUrl : '';
 }
-export async function loadContent(siteId = SITE_ID) {
+export async function loadContent(siteId = selectedSiteId(globalThis.location?.search || '', SITE_ID)) {
   const { data, error } = await getSupabase().from('agent_site_content').select(selection).eq('site_id', siteId).maybeSingle();
   if (error) throw Error('Unable to load website content. Run setup-content.sql in Supabase and check your connection.');
   return { content: fromRow(data), exists: Boolean(data) };
