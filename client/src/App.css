@@ -57,3 +57,12 @@ h2 { margin: 12px 0; font-size: clamp(29px, 3vw, 40px); line-height: 1.2; }
   .page-intro { padding-block: 40px 55px; }
   .contact-callout { padding-block: 45px; }
 }
+
+.agent-photo { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.company-logo { width: 100%; height: 100%; object-fit: contain; background: white; }
+.agent-story, .about-content p { white-space: pre-line; }
+.agent-socials { display: flex; flex-wrap: wrap; gap: 15px; margin-block: 24px; font-size: 14px; }
+.agent-socials a { text-decoration: underline; }
+.content-notice { padding: 12px 20px; text-align: center; background: #fff2d5; color: #78551a; font-size: 13px; }
+.agent-profile .profile-initials:has(img) { display: block; width: 170px; height: 200px; margin-bottom: 20px; overflow: hidden; border-radius: 8px; }
+.about-content, .contact-information { overflow-wrap: anywhere; }

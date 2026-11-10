@@ -41,3 +41,39 @@
 .agent-admin .admin-modules a { font-size: 13px; text-decoration: underline; }
 @media(max-width: 850px) { .agent-admin .admin-login-layout { gap: 20px; margin: 30px auto; } .agent-admin .admin-login-intro { padding: 20px 0; } .agent-admin .admin-overview { padding: 30px; } .agent-admin .admin-workspace { grid-template-columns: 190px minmax(0,1fr); } .agent-admin .admin-modules { grid-template-columns: 1fr; gap: 0; } }
 @media(max-width: 600px) { .agent-admin .admin-login-layout { grid-template-columns: 1fr; } .agent-admin .admin-login-intro { display: none; } .agent-admin .admin-login-card { padding: 28px 22px; } .agent-admin .admin-workspace { grid-template-columns: 1fr; } .agent-admin .admin-sidebar { border-right: 0; border-bottom: 1px solid #dfe5dd; padding: 20px; } .agent-admin .admin-sidebar a { display: inline-block; margin: 8px 10px 0 0; } .agent-admin .admin-sidebar p { margin-top: 15px; } .agent-admin .admin-overview { padding: 30px 20px; } }
+
+/* Website content editor */
+.agent-admin .content-editor { background: #fff; border: 1px solid #dfe5dd; border-radius: 12px; margin-top: 30px; padding: clamp(20px,3vw,34px); }
+.agent-admin .editor-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.agent-admin .editor-heading h2 { font-size: 32px; margin: 10px 0; }
+.agent-admin .editor-state { font-size: 11px; white-space: nowrap; border-radius: 30px; padding: 7px 12px; background: #e9f0e9; }
+.agent-admin .editor-state.has-changes { background: #fff2d5; color: #78551a; }
+.agent-admin .editor-tabs { display: flex; gap: 8px; border-bottom: 1px solid #dfe5dd; margin-top: 25px; }
+.agent-admin .editor-tabs button { border: 0; border-bottom: 3px solid transparent; padding: 14px 12px; color: #647065; background: transparent; font-size: 14px; }
+.agent-admin .editor-tabs button[aria-selected=true] { color: #285748; border-color: #285748; font-weight: 700; }
+.agent-admin .content-editor form { margin-top: 0; }
+.agent-admin .content-editor fieldset { border: 0; padding: 0; min-width: 0; margin: 0; }
+.agent-admin .editor-image-field { display: flex; align-items: center; gap: 22px; padding: 25px 0; border-bottom: 1px solid #e7ebe5; }
+.agent-admin .editor-image-preview { flex-shrink: 0; width: 100px; height: 110px; background: #eef2ec; border: 1px dashed #bacabc; display: grid; place-items: center; overflow: hidden; border-radius: 8px; font-size: 12px; color: #647065; }
+.agent-admin .editor-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.agent-admin .editor-image-preview.logo img { object-fit: contain; padding: 7px; }
+.agent-admin .editor-image-field h3 { font-family: inherit; font-size: 15px; margin: 0; }
+.agent-admin .editor-image-field p { font-size: 12px; margin: 7px 0; }
+.agent-admin .editor-image-field small { display: block; font-size: 11px; color: #647065; margin-top: 10px; }
+.agent-admin .upload-label { display: inline-block; margin: 6px 0 0; cursor: pointer; position: relative; overflow: hidden; }
+.agent-admin .upload-label:focus-within { outline: 2px solid #285748; outline-offset: 3px; }
+.agent-admin .upload-label input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.agent-admin .editor-remove { border: 0; background: transparent; color: #843f31; padding: 8px 12px; font-size: 12px; text-decoration: underline; }
+.agent-admin .editor-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+.agent-admin .editor-fields label { margin-top: 22px; }
+.agent-admin .editor-fields label > span { display: block; margin-bottom: 8px; }
+.agent-admin .editor-fields textarea { width: 100%; resize: vertical; border: 1px solid #ccd7cd; border-radius: 5px; padding: 12px; background: white; color: #20382f; font-family: inherit; font-size: 15px; line-height: 1.7; }
+.agent-admin .editor-fields small { display: block; text-align: right; font-size: 10px; font-weight: 400; color: #647065; margin-top: 5px; }
+.agent-admin .editor-wide { grid-column: 1 / -1; }
+.agent-admin .editor-publish-note { background: #f5f6f1; border-radius: 5px; padding: 14px; font-size: 12px; margin-top: 25px; }
+.agent-admin .editor-success { background: #e9f3eb; border: 1px solid #b9d4bf; color: #285748; padding: 14px; border-radius: 5px; }
+.agent-admin .editor-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+.agent-admin .editor-actions .admin-primary { width: auto; margin: 0; padding-inline: 22px; }
+.agent-admin .editor-actions a { font-size: 12px; text-decoration: underline; margin-left: auto; }
+@media(max-width: 700px) { .agent-admin .editor-fields { grid-template-columns: 1fr; } .agent-admin .editor-heading { flex-direction: column; } .agent-admin .editor-actions a { margin-left: 0; } }
+@media(max-width: 400px) { .agent-admin .editor-image-field { flex-direction: column; align-items: start; } }

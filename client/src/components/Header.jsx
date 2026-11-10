@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { agent } from '../data/agent.js';
+import { imageUrl } from '../services/siteContent.js';
+import { useAgent } from '../context/AgentContext.js';
 
 export default function Header({ page }) {
+  const agent = useAgent();
   const menuRef = useRef(null);
   useEffect(() => {
     function closeOutside(event) {
@@ -18,7 +20,7 @@ export default function Header({ page }) {
     <header className="site-header container">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <a href="#/home" className="brand" onClick={closeMenu}>
-        <span className="brand-mark">{agent.initials}</span>
+        <span className="brand-mark">{agent.logoPath ? <img className="company-logo" src={imageUrl(agent.logoPath)} alt={`${agent.brokerage} logo`} /> : agent.initials}</span>
         <span><strong>{agent.name}</strong><small>{agent.brokerage}</small></span>
       </a>
       <nav aria-label="Main navigation">

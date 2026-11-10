@@ -1,14 +1,15 @@
 import AgentProfile from '../components/AgentProfile.jsx';
 import ContactCallout from '../components/ContactCallout.jsx';
 import ListingsCollection from '../components/ListingsCollection.jsx';
-import { agent } from '../data/agent.js';
+import { useAgent } from '../context/AgentContext.js';
 import { properties } from '../data/properties.js';
 import '../styles/Home.css';
 
 export default function Home(listingActions) {
+  const agent = useAgent();
   return <>
     <section className="hero"><div className="hero-content">
-      <span className="eyebrow">ATLANTA REAL ESTATE · A PERSONAL APPROACH</span>
+      <span className="eyebrow">{agent.location} · A PERSONAL APPROACH</span>
       <h1>{agent.headline}</h1><p>Local insight. Thoughtful guidance. A real estate experience built around what matters to you.</p>
       <a className="button" href="#/active-listings">Find your next home ↗</a>
     </div><div className="hero-image"><img src={properties[0].image} alt="Sample home exterior" />

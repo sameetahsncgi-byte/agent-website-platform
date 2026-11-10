@@ -1,17 +1,18 @@
 import AgentProfile from '../components/AgentProfile.jsx';
 import PageIntro from '../components/PageIntro.jsx';
 import ContactCallout from '../components/ContactCallout.jsx';
-import { agent } from '../data/agent.js';
+import { useAgent } from '../context/AgentContext.js';
 import '../styles/About.css';
 
 export default function About() {
+  const agent = useAgent();
   return <>
-    <PageIntro eyebrow="MEET YOUR AGENT" title={`Hello, I’m ${agent.name.split(' ')[0]}.`} description="A local perspective and a personal commitment to helping you find your next chapter." />
+    <PageIntro eyebrow="MEET YOUR AGENT" title={`Hello, I’m ${agent.name.split(' ')[0]}.`} description={agent.professionalTitle} />
     <section className="about-page container"><div className="about-grid"><AgentProfile />
-      <div className="about-content"><span className="eyebrow">MY APPROACH</span><h2>Your goals come first.<br />Every step of the way.</h2>
-        <p>Home means something different to everyone. It might be a fresh start, room to grow, or a place that simply feels right.</p>
-        <p>{agent.bio} From exploring neighborhoods to preparing for a sale, I focus on practical next steps that reflect your plans.</p>
-        <p>This is a sample biography. Later, each agent can replace it with their own story, background, and areas of expertise.</p>
+      <div className="about-content"><span className="eyebrow">MY APPROACH</span><h2>{agent.aboutTitle}</h2>
+        <p>{agent.aboutIntro}</p>
+        <p>{agent.bio}</p>
+        <p className="agent-story">{agent.aboutStory}</p>
         <a className="button" href="#/contact">Let’s connect ↗</a>
       </div></div>
       <div className="values-grid">

@@ -1,6 +1,7 @@
-import { agent } from '../data/agent.js';
+import { useAgent } from '../context/AgentContext.js';
 
 export default function Footer() {
+  const agent = useAgent();
   return <footer className="site-footer"><div className="container footer-content">
     <span>{agent.name} · {agent.brokerage}</span>
     <nav className="footer-links" aria-label="Footer navigation">

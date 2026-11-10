@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import PageIntro from '../components/PageIntro.jsx';
-import { agent } from '../data/agent.js';
+import { useAgent } from '../context/AgentContext.js';
 import '../styles/Contact.css';
 
 export default function Contact() {
+  const agent = useAgent();
   const [submitted, setSubmitted] = useState(false);
   return <>
     <PageIntro eyebrow="GET IN TOUCH" title="Let’s talk about your next move." description="A question, an idea, or a plan taking shape—start the conversation here." />
@@ -13,7 +14,8 @@ export default function Contact() {
       <div className="contact-item"><span>Phone</span><a href={`tel:${agent.phone}`}>{agent.phone}</a></div>
       <div className="contact-item"><span>Based in</span><strong>{agent.location}</strong></div>
       <div className="contact-item"><span>Brokerage</span><strong>{agent.brokerage}</strong></div>
-      <p className="demo-note">These are fictional demo contact details.</p>
+      {agent.address && <div className="contact-item"><span>Office address</span><strong className="agent-story">{agent.address}</strong></div>}
+      <div className="agent-socials">{['website', 'facebook', 'instagram', 'linkedin'].map(key => agent[key] && <a key={key} href={agent[key]} target="_blank" rel="noopener noreferrer">{key === 'website' ? 'Website' : key[0].toUpperCase() + key.slice(1)} ↗</a>)}</div>
     </aside><div className="contact-form-panel">
       {submitted ? <div className="form-confirmation" role="status"><span className="confirmation-symbol">✓</span><h2>Your demo form is complete.</h2>
         <p>The form passed browser validation. No message was sent or stored. Email delivery will be connected later.</p>

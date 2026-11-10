@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { money } from '../utils/format.js';
-import { agent } from '../data/agent.js';
+import { useAgent } from '../context/AgentContext.js';
 
 export default function PropertyDetails({ property, onClose }) {
+  const agent = useAgent();
   const dialogRef = useRef(null);
   useEffect(() => {
     const dialog = dialogRef.current;
