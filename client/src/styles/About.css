@@ -1,8 +1,9 @@
-/* About Me page only. */
-.about-page { padding-block: 65px; }
-.values-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 65px; }
-.values-grid article { padding: 27px; border-top: 2px solid var(--green); background: #eef0e8; }
-.values-grid h3 { margin-top: 17px; font-size: 18px; }
-.values-grid p { margin-bottom: 0; color: var(--muted); font-size: 14px; }
-@media (max-width: 850px) { .values-grid { grid-template-columns: 1fr; gap: 20px; margin-top: 40px; } }
-@media (max-width: 500px) { .about-page { padding-block: 40px; } }
+.about-page { padding-block: 85px; }
+.about-page .about-grid { align-items: start; }
+.about-page .about-content h2 { margin-top: 18px; }
+.values-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 40px; margin-top: 80px; padding-top: 45px; border-top: 1px solid var(--border); }
+.values-grid article { padding-right: 20px; }
+.values-grid h3 { font: 25px/1.3 Georgia,serif; font-weight: 400; margin-top: 20px; letter-spacing: -.5px; }
+.values-grid p { color: var(--muted); font-size: 12px; line-height: 1.9; }
+@media(max-width:900px) { .about-page .about-grid { grid-template-columns: 1fr; } .about-page .agent-profile { max-width: 550px; } .values-grid { gap: 24px; } }
+@media(max-width:650px) { .about-page { padding-block: 50px; } .values-grid { grid-template-columns: 1fr; gap: 25px; margin-top: 45px; padding-top: 35px; } .values-grid article { padding-right: 0; } .values-grid h3 { margin-block: 12px; } }

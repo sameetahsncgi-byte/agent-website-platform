@@ -34,10 +34,10 @@ export default function ListingsCollection({
       onSubmit={event => { event.preventDefault(); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
     <section ref={sectionRef} className="properties-section container" aria-labelledby={headingId}>
       <div className="section-heading"><div>
-        <span className="eyebrow">{status === 'Sold' ? 'COMPLETED CHAPTERS' : 'EXPLORE THE COLLECTION'}</span>
-        <h2 id={headingId}>{status === 'Sold' ? 'A look at past sales.' : multipleStatuses ? 'Explore active and pending homes.' : 'Find your kind of home.'}</h2>
+        <span className="eyebrow">{status === 'Sold' ? 'COMPLETED CHAPTERS' : 'A PLACE TO CALL YOUR OWN'}</span>
+        <h2 id={headingId}>{status === 'Sold' ? 'A look at past sales.' : multipleStatuses ? 'Explore active and pending homes.' : 'Some places just feel like home.'}</h2>
         <p>{sourceDescription}</p>
-      </div><span className="results-count" aria-live="polite">{visible.length} properties · {savedInCollection} saved</span></div>
+      </div><span className="results-count" aria-live="polite">{visible.length} {visible.length === 1 ? 'property' : 'properties'} · {savedInCollection} saved</span></div>
       <div className="properties-grid">{visible.map(property => <PropertyCard key={property.id} property={property} isSaved={saved.includes(property.id)} onSave={onSave} onView={onView} />)}</div>
       {!visible.length && <div className="empty-state"><h3>No matching demo properties.</h3><p>Try a different location, status, or price range.</p>
         <button className="button" type="button" onClick={clearFilters}>Clear filters</button></div>}

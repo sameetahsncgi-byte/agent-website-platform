@@ -1,11 +1,14 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; background: #faf9f5; color: #20382f; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; }
+body { margin: 0; min-width: 320px; background: #fbfaf7; color: #263b32; font-family: 'Avenir Next', Avenir, 'Segoe UI', Arial, sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; }
 #root { width: 100%; min-height: 100vh; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button, select, summary { cursor: pointer; }
 img { max-width: 100%; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid #b88640; outline-offset: 4px; }
-section[id] { scroll-margin-top: 20px; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid #a67c45; outline-offset: 4px; }
+button { touch-action: manipulation; }
+section[id] { scroll-margin-top: 30px; }
+::selection { background: #d8c7a9; color: #20382f; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
