@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase.js';
 import { agent as defaults } from '../data/agent.js';
+import { THEMES } from '../data/themes.js';
 
 export const SITE_ID = import.meta.env?.VITE_AGENT_SITE_ID || 'site-agent001';
 export const BUCKET = 'agent-images';
@@ -14,6 +15,7 @@ export const fields = {
   instagram: ['Instagram URL', 500], linkedin: ['LinkedIn URL', 500],
 };
 export const defaultContent = {
+  themeKey: 'forest',
   ...defaults, professionalTitle: 'Real Estate Agent',
   aboutTitle: 'Your goals come first. Every step of the way.',
   aboutIntro: 'Home means something different to everyone. It might be a fresh start, room to grow, or a place that simply feels right.',
@@ -21,10 +23,10 @@ export const defaultContent = {
   address: '', website: '', facebook: '', instagram: '', linkedin: '', photoPath: '', logoPath: '',
 };
 const column = key => key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-const keys = [...Object.keys(fields), 'photoPath', 'logoPath'];
+const keys = [...Object.keys(fields), 'photoPath', 'logoPath', 'themeKey'];
 const selection = ['site_id', 'updated_at', ...keys.map(column)].join(',');
 export function fromRow(row) {
-  return row ? { ...defaultContent, ...Object.fromEntries(keys.map(key => [key, row[column(key)] ?? ''])) } : { ...defaultContent };
+  return row ? { ...defaultContent, ...Object.fromEntries(keys.map(key => [key, row[column(key)] ?? (key === 'themeKey' ? 'forest' : '')])) } : { ...defaultContent };
 }
 export function validateContent(value) {
   const result = {};
@@ -42,6 +44,9 @@ export function validateContent(value) {
     try { url = new URL(result[key]); } catch { throw Error(`${fields[key][0]} must be a complete https:// URL.`); }
     if (url.protocol !== 'https:' || url.username || url.password) throw Error(`${fields[key][0]} must use https:// without login details.`);
   }
+  const themeKey = value.themeKey || 'forest';
+  if (!THEMES.some(theme => theme.id === themeKey)) throw Error('Choose one of the available website themes.');
+  result.themeKey = themeKey;
   return result;
 }
 export function imageUrl(path) {

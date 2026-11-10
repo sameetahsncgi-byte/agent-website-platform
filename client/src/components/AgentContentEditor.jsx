@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import ThemePicker from './ThemePicker.jsx';
 import { defaultContent, fields, imageUrl, loadContent, prepareImage, saveContent, SITE_ID } from '../services/siteContent.js';
 
 const sections = {
@@ -96,6 +97,7 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
     <div className="editor-tabs" role="tablist" aria-label="Content sections">{Object.keys(sections).map(key => <button key={key} id={`tab-${key}`} role="tab" aria-selected={section === key} aria-controls="editor-panel" type="button" disabled={processingImage || saving} onClick={() => setSection(key)}>{key === 'about' ? 'About Me' : 'Contact & branding'}</button>)}</div>
     <form onSubmit={publish}>
       <fieldset disabled={saving}>
+        <ThemePicker value={form.themeKey || 'forest'} onChange={themeKey => update('themeKey', themeKey)} />
         <div id="editor-panel" role="tabpanel" aria-labelledby={`tab-${section}`}>
           <ImageField kind={section === 'about' ? 'photo' : 'logo'} value={form[section === 'about' ? 'photoPath' : 'logoPath']} file={files[section === 'about' ? 'photo' : 'logo']} disabled={saving}
             onChange={file => { const kind = section === 'about' ? 'photo' : 'logo'; setFiles(current => ({ ...current, [kind]: file })); setMessage(''); setError(''); }}

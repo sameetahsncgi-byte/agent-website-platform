@@ -12,6 +12,8 @@ import ActiveListings from './pages/ActiveListings.jsx';
 import SoldListings from './pages/SoldListings.jsx';
 import usePage from './hooks/usePage.js';
 import './App.css';
+import { themeVariables } from './data/themes.js';
+import './styles/Themes.css';
 
 // App owns the shared layout and passes listing actions to separate pages.
 export default function App() {
@@ -37,7 +39,7 @@ export default function App() {
   if (page === 'admin' || page === 'login') return <AgentAdmin />;
 
   return (
-    <>
+    <div className="website-theme" data-theme={agent.themeKey || 'forest'} style={themeVariables(agent.themeKey)}>
       <div className="demo-bar">Demo website · Sample listings · No live MLS feed</div>
       {agent.contentStatus === 'error' && <div className="content-notice" role="status">Website details could not be loaded. Showing demo information. Please try again shortly.</div>}
       {agent.contentStatus === 'missing' && <div className="content-notice">Sample agent details · Sign in to publish your profile.</div>}
@@ -47,6 +49,6 @@ export default function App() {
       </main>
       <Footer />
       <PropertyDetails key={`dialog-${routeKey}`} property={selected?.routeKey === routeKey ? selected.property : null} onClose={() => setSelected(null)} />
-    </>
+    </div>
   );
 }

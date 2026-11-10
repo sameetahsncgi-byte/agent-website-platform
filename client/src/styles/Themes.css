@@ -1,0 +1,43 @@
+/* Admin picker remains independent of the public website's palette. */
+.agent-admin .theme-picker { padding: 24px 0; border-bottom: 1px solid #dfe5dd; }
+.agent-admin .theme-picker-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.agent-admin .theme-picker h3 { margin: 0 0 8px; font-size: 18px; font-family: inherit; font-weight: 600; }
+.agent-admin .theme-picker p { margin: 0 0 18px; font-size: 12px; }
+.agent-admin .theme-current { padding: 5px 10px; background: #eef3ec; border-radius: 20px; font-size: 10px; white-space: nowrap; }
+.agent-admin .theme-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.agent-admin .theme-choice { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0; padding: 14px; border: 2px solid #e2e6df; border-radius: 8px; background: white; cursor: pointer; }
+.agent-admin .theme-choice.is-selected { border-color: #285748; background: #f1f6f0; }
+.agent-admin .theme-choice:focus-within { outline: 2px solid #285748; outline-offset: 3px; }
+.agent-admin .theme-choice input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: #285748; }
+.agent-admin .theme-swatches { display: flex; gap: 4px; }
+.agent-admin .theme-swatches > span { width: 19px; height: 19px; border: 1px solid #00000018; border-radius: 50%; }
+.agent-admin .theme-name { flex-basis: 100%; font-size: 12px; font-weight: 600; }
+.agent-admin .theme-mini-preview { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 18px; padding: 25px; border: 1px solid #deded8; border-radius: 8px; background: var(--theme-surface); color: var(--dark-green); }
+.agent-admin .theme-preview-label { display: block; margin-bottom: 9px; font-size: 8px; letter-spacing: 1.5px; color: var(--green); }
+.agent-admin .theme-mini-preview strong { font: 25px/1.2 Georgia,serif; }
+.agent-admin .theme-preview-button { display: flex; justify-content: space-between; gap: 20px; padding: 12px 16px; background: var(--green); color: white; border-radius: 3px; font-size: 11px; white-space: nowrap; }
+.agent-admin .theme-help { display: block; margin-top: 12px; font-size: 11px; color: #647065; }
+/* Public website: override fixed colors from the existing design. */
+.website-theme { min-height: 100vh; background: var(--paper); color: var(--dark-green); }
+.website-theme .header-wrap, .website-theme .site-footer, .website-theme .property-dialog { background: var(--paper); color: var(--dark-green); }
+.website-theme .page-intro, .website-theme .home-about, .website-theme .agent-profile, .website-theme .empty-state, .website-theme .values-grid article { background: var(--theme-surface); }
+.website-theme .demo-bar { background: var(--theme-surface); color: var(--dark-green); }
+.website-theme .hero-shade { background: linear-gradient(90deg,var(--theme-shade) 0%,var(--theme-fade) 85%); }
+.website-theme .contact-callout { background: var(--dark-green); }
+.website-theme .button:hover { background: var(--theme-hover); border-color: var(--theme-hover); }
+.website-theme .button-cream { background: var(--paper); border-color: var(--paper); color: var(--dark-green); }
+.website-theme .button-cream:hover { background: var(--theme-surface); border-color: var(--theme-surface); color: var(--dark-green); }
+.website-theme .eyebrow, .website-theme h2 em, .website-theme .contact-item > span, .website-theme .footer-brand > span, .website-theme .move-number { color: var(--green); }
+.website-theme .contact-callout .eyebrow, .website-theme .contact-callout h2 em { color: var(--theme-surface); }
+.website-theme .sold-badge { background: var(--green); color: white; }
+.website-theme .brand-mark { border-color: var(--green); }
+.website-theme .text-link { color: var(--green); border-color: var(--green); }
+.website-theme .text-link:hover { color: var(--dark-green); border-color: var(--dark-green); }
+.website-theme .dropdown-menu a:hover { background: var(--theme-surface); }
+.website-theme .property-features, .website-theme .property-features svg, .website-theme .profile-location, .website-theme .profile-identity small, .website-theme .profile-identity span:not(.profile-location) { color: var(--muted); }
+.website-theme .profile-visual { background: var(--theme-surface); }
+.website-theme .confirmation-symbol { background: var(--theme-surface); color: var(--green); }
+.website-theme .callout-action p, .website-theme .callout-phone { color: var(--theme-surface); }
+.website-theme .page-intro::after { border-color: var(--border); }
+@media(max-width:700px) { .agent-admin .theme-options { grid-template-columns: repeat(2,minmax(0,1fr)); } .agent-admin .theme-mini-preview { flex-direction: column; align-items: start; } .agent-admin .theme-picker-heading { flex-direction: column; gap: 0; margin-bottom: 16px; } }
+@media(max-width:360px) { .agent-admin .theme-options { grid-template-columns: minmax(0,1fr); } }
