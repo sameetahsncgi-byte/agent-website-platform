@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { platformRequest } from '../services/platformApi.js';
+import { adminPlatformRequest } from '../services/platformApi.js';
 import '../styles/PlatformAdmin.css';
 export default function AgentManager() {
   const [agents, setAgents] = useState([]);
@@ -15,7 +15,7 @@ export default function AgentManager() {
   useEffect(() => {
     let active = true;
     setLoading(true); setListError('');
-    platformRequest('/api/platform/agents').then(data => { if (active) setAgents(data.agents); })
+    adminPlatformRequest('/api/platform/agents').then(data => { if (active) setAgents(data.agents); })
       .catch(error => { if (active) setListError(error.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -27,7 +27,7 @@ export default function AgentManager() {
   async function createAgent(event) {
     event.preventDefault(); setBusy(true); setError(''); setResult(null); setCopied(false);
     try {
-      const data = await platformRequest('/api/platform/agents', { action:'create', ...form, requestId });
+      const data = await adminPlatformRequest('/api/platform/agents', { action:'create', ...form, requestId });
       setResult(data); setForm({ name:'', email:'', slug:'' }); setRequestId(crypto.randomUUID());
     } catch (error) { setError(error.message); }
     finally { setBusy(false); setRefresh(value => value + 1); }
@@ -35,7 +35,7 @@ export default function AgentManager() {
   async function newLink(agent) {
     if (result && !window.confirm('Replace the currently displayed link with a new invitation link?')) return;
     setBusy(true); setError(''); setCopied(false);
-    try { setResult(await platformRequest('/api/platform/agents', { action:'regenerate', userId:agent.user_id })); }
+    try { setResult(await adminPlatformRequest('/api/platform/agents', { action:'regenerate', userId:agent.user_id })); }
     catch (error) { setError(error.message); }
     finally { setBusy(false); setRefresh(value => value + 1); }
   }

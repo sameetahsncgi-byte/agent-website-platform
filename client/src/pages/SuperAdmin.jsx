@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getSupabase } from '../services/supabase.js';
+import { getAdminSupabase } from '../services/adminSupabase.js';
 import { platformAuth } from '../services/platformAuth.js';
 import '../styles/AgentAdmin.css';
 import AgentManager from '../components/AgentManager.jsx';
@@ -28,7 +28,7 @@ export default function SuperAdmin() {
   useEffect(() => {
     let subscription;
     try {
-      ({ data: { subscription } } = getSupabase().auth.onAuthStateChange(event => {
+      ({ data: { subscription } } = getAdminSupabase().auth.onAuthStateChange(event => {
         if (event === 'SIGNED_OUT') setAdmin(null);
         // Revalidate outside the Supabase callback through the effect above.
         if (['SIGNED_OUT', 'SIGNED_IN', 'TOKEN_REFRESHED'].includes(event)) {

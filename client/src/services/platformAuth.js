@@ -1,4 +1,4 @@
-import { getSupabase } from './supabase.js';
+import { getAdminSupabase } from './adminSupabase.js';
 
 function accessError(message, status) {
   const error = new Error(message);
@@ -45,4 +45,4 @@ export function makePlatformAuth(getClient) {
   return { current, login, logout };
 }
 
-export const platformAuth = makePlatformAuth(getSupabase);
+export const platformAuth = makePlatformAuth(getAdminSupabase);
