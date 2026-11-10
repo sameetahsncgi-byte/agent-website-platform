@@ -7,6 +7,7 @@ import PageIntro from './components/PageIntro.jsx';
 import Home from './pages/Home.jsx';
 import AgentAdmin from './pages/AgentAdmin.jsx';
 import SuperAdmin from './pages/SuperAdmin.jsx';
+import Onboarding from './pages/Onboarding.jsx';
 import About from './pages/About.jsx';
 import Contact from './pages/Contact.jsx';
 import ActiveListings from './pages/ActiveListings.jsx';
@@ -37,6 +38,7 @@ export default function App() {
     'sold-listings': <SoldListings {...listingActions} />,
   };
 
+  if (page === 'onboarding') return <Onboarding />;
   if (page === 'super-admin') return <SuperAdmin />;
   if (page === 'admin' || page === 'login') return <AgentAdmin />;
 

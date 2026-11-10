@@ -1,0 +1,24 @@
+.agent-admin .platform-workspace { width:100%;max-width:1200px;margin:0 auto;padding:40px clamp(20px,4vw,55px); }
+.agent-admin .platform-section-heading {margin-top:45px;}
+.agent-admin .platform-section-heading h2 {font-size:34px;}
+.agent-admin .platform-fields {display:grid;grid-template-columns:1fr 1fr;border:0;padding:0;margin:0;gap:0 22px;min-width:0;}
+.agent-admin .platform-fields label:last-child {grid-column:1/-1;}
+.agent-admin .platform-fields input {display:block;margin-top:8px;}
+.agent-admin .platform-help {font-size:12px;line-height:1.8;color:#647065;}
+.agent-admin .platform-submit {width:auto;min-width:240px;}
+.agent-admin .platform-link-result {background:#edf5ed;border:1px solid #bed3be;border-radius:8px;margin-top:25px;padding:25px;}
+.agent-admin .platform-link-result h3 {font:26px Georgia,serif;margin:12px 0 0;}
+.agent-admin .platform-link-result textarea {display:block;width:100%;font:12px/1.7 monospace;resize:vertical;padding:12px;border:1px solid #bed3be;background:white;border-radius:5px;margin-bottom:14px;overflow-wrap:anywhere;}
+.agent-admin .platform-table-heading {display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.agent-admin .platform-table-scroll {overflow:auto;}
+.agent-admin .platform-table-scroll table {width:100%;border-collapse:collapse;min-width:620px;margin-top:20px;font-size:12px;text-align:left;}
+.agent-admin .platform-table-scroll th,.agent-admin .platform-table-scroll td {padding:16px 12px;border-bottom:1px solid #e3e8df;vertical-align:middle;}
+.agent-admin .platform-table-scroll th {font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#647065;}
+.agent-admin .platform-table-scroll small {display:block;color:#647065;margin-top:5px;}
+.agent-admin .platform-status {display:inline-block;font-size:10px;border-radius:20px;padding:5px 10px;background:#fff3d9;color:#78551a;}
+.agent-admin .platform-status.active {background:#e6f2e8;color:#285748;}
+.agent-admin .platform-onboarding {max-width:650px;margin:60px auto;padding:0 20px 50px;}
+.agent-admin .platform-onboarding h1 {font-size:clamp(32px,4vw,44px);margin-block:20px;}
+.agent-admin .platform-onboarding fieldset {border:0;margin:0;padding:0;min-width:0;}
+.agent-admin .platform-onboarding a.admin-primary {text-align:center;}
+@media(max-width:650px){.agent-admin .platform-fields{grid-template-columns:1fr;}.agent-admin .platform-submit{width:100%;min-width:0;}.agent-admin .platform-onboarding{margin-top:30px;}.agent-admin .platform-link-result{padding:20px;}}

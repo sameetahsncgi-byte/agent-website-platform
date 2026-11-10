@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getSupabase } from '../services/supabase.js';
 import { platformAuth } from '../services/platformAuth.js';
 import '../styles/AgentAdmin.css';
+import AgentManager from '../components/AgentManager.jsx';
+import '../styles/PlatformAdmin.css';
 
 export default function SuperAdmin() {
   const [admin, setAdmin] = useState(null);
@@ -59,17 +61,18 @@ export default function SuperAdmin() {
       <a href="#/home">View website ↗</a>
     </header>
     {checking ? <main className="admin-loading" role="status">Checking administrator access…</main> : admin ?
-      <main className="admin-overview">
+      <main className="admin-overview platform-workspace">
         <span className="admin-label">SUPER ADMIN</span><h1>Your platform workspace.</h1>
         <div className="admin-account">
           <span className="admin-status">Access verified</span><h2>You’re signed in.</h2><p>{admin.email}</p>
-          <p>Agent management and onboarding-link creation will be added in the next step.</p>
+          <p>Manage agent accounts and generate private onboarding links.</p>
           {error && <p className="admin-error" role="alert">{error}</p>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
             <button type="button" className="admin-secondary" onClick={() => setRevision(value => value + 1)} disabled={busy}>Check access</button>
             <button type="button" className="admin-secondary" onClick={logout} disabled={busy}>{busy ? 'Please wait…' : 'Log out'}</button>
           </div>
         </div>
+        <AgentManager key={admin.id} />
       </main> : <main className="admin-login-layout">
         <section className="admin-login-intro">
           <span className="admin-label">PLATFORM MANAGEMENT</span><h1>One workspace.<br/>Every agent.</h1>
