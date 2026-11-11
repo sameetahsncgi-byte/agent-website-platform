@@ -12,18 +12,21 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
       const client = getClient(env);
       const admin = await verifiedAdmin(req, client);
       if (req.method === 'GET') {
-        const { data: profiles, error } = await client.from('agent_profiles').select('site_id, name, active, created_at').eq('role', 'agent').order('created_at', { ascending: false }).limit(500);
+        const { data: profiles, error } = await client.from('agent_profiles').select('user_id, site_id, name, active, created_at').eq('role', 'agent').order('created_at', { ascending: false }).limit(500);
         if (error) throw httpError(503, 'Unable to load agent websites.');
         const { data: settings, error: settingsError } = await client.from('agent_website_settings').select('site_id, enabled, hostname, publish_before_onboarding, subdomain_slug, domain_locked');
         if (settingsError) throw httpError(503, 'Run setup-domain-locks.sql after the previous migrations in Supabase first.');
         const { data: onboarding, error: onboardingError } = await client.from('agent_onboarding').select('site_id, status, site_slug');
         if (onboardingError) throw httpError(503, 'Unable to load onboarding status.');
+        const {data: emails,error: emailError}=await client.rpc('platform_agent_emails');
+        if(emailError) throw httpError(503,'Unable to load the agent directory. Run setup-agent-directory.sql in Supabase first.');
+        const emailLookup=new Map((emails || []).map(row=>[row.site_id,row.email]));
         const accounts = new Map((onboarding || []).map(row => [row.site_id, row]));
         const lookup = new Map((settings || []).map(row => [row.site_id, row]));
         return res.status(200).json({ websites: (profiles || []).map(profile => {
           const settings = lookup.get(profile.site_id);
           const account = accounts.get(profile.site_id);
-          return { ...profile, enabled: settings?.enabled ?? true, hostname: settings?.hostname || null,
+          return { ...profile, email: emailLookup.get(profile.site_id) || '', onboardingStatus: account?.status || null, enabled: settings?.enabled ?? true, hostname: settings?.hostname || null,
             domainLocked: settings?.domain_locked === true,
             subdomainSlug: settings?.subdomain_slug || account?.site_slug || '',
             defaultHostname: settings?.subdomain_slug || account?.site_slug ? defaultAgentHostname(settings?.subdomain_slug || account.site_slug) : null,

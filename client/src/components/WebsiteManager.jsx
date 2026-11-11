@@ -1,74 +1,75 @@
-import { notifyWebsiteSettingsChanged, watchWebsiteSettings } from '../services/websiteSync.js';
-import { useEffect, useRef, useState } from 'react';
-import { adminPlatformRequest } from '../services/platformApi.js';
-import { agentWebsiteHref } from '../services/siteRouting.js';
+import {notifyWebsiteSettingsChanged,watchWebsiteSettings} from '../services/websiteSync.js';
+import {useEffect,useRef,useState} from 'react';
+import {adminPlatformRequest} from '../services/platformApi.js';
+import {filterAgentWebsites,agentAccountStatus,agentWebsiteStatus} from '../services/agentDirectory.js';
+import AgentWebsiteDialog from './AgentWebsiteDialog.jsx';
 
-function WebsiteRow({ website, busy, save }) {
-  const [hostname, setHostname] = useState(website.hostname || '');
-  const live = (website.publicEligible ?? website.active) && website.enabled;
-  return <article className="website-control-row">
-    <div><h3>{website.name}</h3><small>{website.site_id}</small><p><strong>{!website.enabled ? 'Website disabled' : live ? website.active ? 'Website enabled' : 'Website live · account setup pending' : 'Account access disabled'}</strong></p>
-      <button className="admin-secondary" type="button" disabled={busy} onClick={() => {
-        if (website.enabled && !window.confirm(`Disable ${website.name}’s public website? Their account and content will be kept.`)) return;
-        save({ action: 'set-enabled', siteId: website.site_id, enabled: !website.enabled });
-      }}>{website.enabled ? 'Disable website' : 'Enable website'}</button>
-      <p><strong>{website.domainLocked ? 'Domain name locked for agent' : 'Agent can change domain name'}</strong></p>
-      <button className="admin-secondary" type="button" aria-pressed={website.domainLocked===true} disabled={busy} onClick={()=>save({action:'set-domain-locked',siteId:website.site_id,locked:!website.domainLocked})}>{website.domainLocked?'Unlock domain name':'Lock domain name'}</button>
-      {live && <p><a href={agentWebsiteHref({ siteId: website.site_id, hostname: website.hostname || website.defaultHostname })} target="_blank" rel="noopener noreferrer">Visit website ↗</a></p>}
-      {website.defaultHostname && <p className="platform-help">Automatic address: <a href={`https://${website.defaultHostname}/`} target="_blank" rel="noopener noreferrer">{website.defaultHostname}</a></p>}
-    </div>
-    <form onSubmit={event => { event.preventDefault(); save({ action: 'set-hostname', siteId: website.site_id, hostname }); }}>
-      <label htmlFor={`hostname-${website.site_id}`}>Website hostname</label>
-      <input id={`hostname-${website.site_id}`} value={hostname} onChange={event => setHostname(event.target.value)} placeholder="yasir.brokerage.sncgi.com" required maxLength={253} autoComplete="off" autoCapitalize="none" spellCheck={false} disabled={busy}/>
-      <div className="website-control-actions"><button className="admin-secondary" disabled={busy} type="submit">Save hostname</button>
-      </div>
-      <p className="platform-help">Saving a new brokerage.sncgi.com hostname renames this agent’s automatic address. The previous brokerage address stops working after a rename. No separate Vercel entry is needed. For a custom domain, connect it in Vercel and configure DNS before saving it here.</p>
-    </form>
-  </article>;
+export function AgentWebsiteTable({websites,onEdit}) {
+  return <div className="platform-table-scroll"><table><thead><tr><th>Agent</th><th>Website</th><th>Status</th><th>Action</th></tr></thead><tbody>{websites.map(website=><tr key={website.site_id}>
+    <td><strong>{website.name}</strong><small>{website.email || 'Login email unavailable'}</small></td>
+    <td className="agent-directory-host">{website.hostname || website.defaultHostname || 'Address not assigned'}</td>
+    <td><span className={`platform-status ${website.enabled && (website.publicEligible ?? website.active)?'active':''}`}>{agentWebsiteStatus(website)}</span><small>{agentAccountStatus(website)}</small>{website.domainLocked && <small>Domain locked</small>}</td>
+    <td><button type="button" className="admin-secondary" aria-haspopup="dialog" aria-label={`Edit ${website.name}`} onClick={event=>onEdit(website.site_id,event.currentTarget)}>Edit</button></td>
+  </tr>)}</tbody></table></div>;
 }
+
 export default function WebsiteManager() {
-  const busyRef=useRef(false);
-  const listVersion=useRef(0);
-  const [websites, setWebsites] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    let active=true;
-    let refreshing=false;
+  const busyRef=useRef(false),listVersion=useRef(0),returnFocus=useRef(null),searchInput=useRef(null);
+  const [websites,setWebsites]=useState([]);
+  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
+  const [error,setError]=useState(''),[syncError,setSyncError]=useState(''),[message,setMessage]=useState('');
+  const [revision,setRevision]=useState(0),[query,setQuery]=useState(''),[selectedId,setSelectedId]=useState(null);
+  useEffect(()=>{
+    let active=true,refreshing=false;
     async function reload(initial=false){
-      if(refreshing || (busyRef.current && !initial)) return;
+      if(refreshing || busyRef.current)return;
       refreshing=true;
       const version=++listVersion.current;
-      if(initial){setLoading(true);setError('');}
-      try {
+      if(initial)setLoading(true);
+      try{
         const data=await adminPlatformRequest('/api/platform/websites');
-        if(active && version===listVersion.current)setWebsites(data.websites);
-      }catch(error){if(active && initial)setError(error.message);}
+        if(active && version===listVersion.current){setWebsites(data.websites);setSyncError('');}
+      }catch(error){if(active && version===listVersion.current)setSyncError(error.message);}
       finally{refreshing=false;if(active && initial)setLoading(false);}
     }
     reload(true);
     const stop=watchWebsiteSettings(()=>reload());
     return ()=>{active=false;stop();};
-  }, [revision]);
-  async function save(body) {
-    busyRef.current=true;listVersion.current++;
-    setBusy(true); setError(''); setMessage('');
-    try {
-      const { website } = await adminPlatformRequest('/api/platform/websites', body);
-      setWebsites(current => current.map(row => row.site_id === website.site_id ? { ...row, ...website } : row));
-      notifyWebsiteSettingsChanged();
-      setMessage(body.action === 'set-domain-locked' ? body.locked ? 'Domain name locked. The agent must contact support to change it.' : 'Domain name unlocked. The agent can change it again.' : body.action === 'set-hostname' ? 'Website address saved. Both dashboards refresh automatically within about 10 seconds.' : body.enabled ? 'Website enabled. Automatically published starter websites do not require the agent to finish onboarding first.' : 'Public website disabled. Agent login and content are preserved. Open pages recheck within about 30 seconds when visible, or on refresh.');
-    } catch (error) { setError(error.message); }
-    finally { busyRef.current=false;setBusy(false); }
+  },[revision]);
+  const selected=websites.find(row=>row.site_id===selectedId);
+  const filtered=filterAgentWebsites(websites,query);
+  function open(siteId,button){returnFocus.current=button;setError('');setMessage('');setSelectedId(siteId);}
+  function close(){setSelectedId(null);setError('');setMessage('');const target=returnFocus.current;requestAnimationFrame(()=>{if(target?.isConnected)target.focus();else searchInput.current?.focus();});}
+  async function mutate(path,body){
+    if(busyRef.current)return null;
+    busyRef.current=true;listVersion.current++;setBusy(true);setError('');setMessage('');
+    try{return await adminPlatformRequest(path,body);}
+    catch(error){setError(error.message);return null;}
+    finally{busyRef.current=false;setBusy(false);}
   }
-  return <section className="platform-agents" aria-label="Website management"><div className="admin-account">
-    <div className="platform-table-heading"><h2>Website management</h2><button type="button" className="admin-secondary" disabled={busy || loading} onClick={() => setRevision(value => value + 1)}>Refresh websites</button></div>
-    <p>Manage every agent’s public address and publishing status. Disabling a website keeps the account and editor available.</p>
-    {message && <p role="status">{message}</p>}{error && <p className="admin-error" role="alert">{error}</p>}
-    {loading ? <p role="status">Loading websites…</p> : websites.map(website => <WebsiteRow key={`${website.site_id}-${website.hostname}`} website={website} busy={busy} save={save}/>)}
-    {!loading && !websites.length && !error && <p>No agent websites found.</p>}
+  async function save(body){
+    const result=await mutate('/api/platform/websites',body);
+    if(!result)return null;
+    const {website}=result;
+    setWebsites(rows=>rows.map(row=>row.site_id===website.site_id?{...row,...website}:row));
+    setMessage(body.action==='set-hostname'?'Website address saved. The agent portal refreshes automatically.':body.action==='set-domain-locked'?body.locked?'Domain locked. The agent must contact support to change it.':'Domain unlocked. The agent can change it.':body.enabled?'Website enabled.':'Public website disabled. The account and content are preserved.');
+    notifyWebsiteSettingsChanged();
+    return website;
+  }
+  async function regenerate(userId){
+    const result=await mutate('/api/platform/agents',{action:'regenerate',userId});
+    if(result)setMessage('New private onboarding link generated.');
+    return result;
+  }
+  return <section className="platform-agents" aria-label="Agent websites"><div className="admin-account">
+    <div className="platform-table-heading"><h2>Agent websites</h2><button type="button" className="admin-secondary" disabled={busy || loading} onClick={()=>setRevision(value=>value+1)}>Refresh</button></div>
+    <p>Find an agent, then select Edit to manage their website and account setup.</p>
+    <label htmlFor="agent-directory-search">Search by name or email</label><input ref={searchInput} id="agent-directory-search" type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Enter an agent name or login email" autoComplete="off"/>
+    {syncError && <p className="admin-error" role="alert">{syncError}</p>}
+    {loading && <p role="status">Loading agents…</p>}
+    <p className="platform-help" role="status">{filtered.length} of {websites.length} agents</p>
+    {filtered.length>0 && <AgentWebsiteTable websites={filtered} onEdit={open}/>}
+    {!loading && !syncError && !filtered.length && <p>{websites.length?'No agents match this name or email.':'No agent websites found. Create an agent above to get started.'}</p>}
+    {selected && <AgentWebsiteDialog key={selected.site_id} website={selected} busy={busy} error={error} message={message} save={save} regenerate={regenerate} onClose={close}/>}
   </div></section>;
 }

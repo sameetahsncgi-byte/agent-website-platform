@@ -11,6 +11,7 @@ function fixture(options = {}) {
   const client = {
     rpc:async(name,args)=>{
       rpcCalls.push([name,args]);
+      if(name==='platform_agent_emails')return options.emailError?{error:{code:'42883'}}:{data:[{site_id:settings.site_id,email:'yasir@example.com'},{site_id:'site-original',email:'original@example.com'}]};
       if(name==='set_agent_domain_lock'){settings.domain_locked=args.p_locked;return {data:{...settings}};}
       if(options.duplicate)return {error:{code:'23505'}};
       Object.assign(settings,{subdomain_slug:args.p_slug,hostname:args.p_slug+'.brokerage.sncgi.com'});
@@ -136,4 +137,18 @@ test('domain locks use a verified Super Admin actor and reject unauthorized call
   const agent=fixture({notAdmin:true});
   assert.equal((await agent.run({action:'set-domain-locked',siteId:'site-yasir-fareed',locked:false})).code,403);
   assert.equal(agent.rpcCalls.length,0);
+});
+
+test('the unified directory includes private login emails for onboarding and original agents',async()=>{
+  const f=fixture();
+  const result=await f.run(undefined,{method:'GET'});
+  assert.equal(result.code,200);
+  assert.equal(result.body.websites[0].email,'yasir@example.com');
+  assert.equal(result.body.websites[1].email,'original@example.com');
+  assert.equal(result.body.websites[0].onboardingStatus,'active');
+  assert.equal(result.body.websites[1].onboardingStatus,null);
+  assert.equal((await fixture({emailError:true}).run(undefined,{method:'GET'})).code,503);
+  const denied=fixture({notAdmin:true});
+  assert.equal((await denied.run(undefined,{method:'GET'})).code,403);
+  assert.equal(denied.rpcCalls.length,0);
 });

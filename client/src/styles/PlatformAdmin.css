@@ -32,3 +32,17 @@
 .subdomain-input { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
 .subdomain-input input { flex:1; min-width:160px; }
 .subdomain-input span { overflow-wrap:anywhere; }
+
+.agent-admin .agent-directory-host { max-width:300px; overflow-wrap:anywhere; }
+.agent-admin .agent-website-dialog { width:min(720px,calc(100vw - 32px)); max-height:calc(100dvh - 48px); padding:28px; margin:auto; border:1px solid #ccd7cd; border-radius:12px; background:#fff; color:#20382f; box-shadow:0 24px 80px #142f2b40; overflow-y:auto; }
+.agent-admin .agent-website-dialog::backdrop { background:#142f2b99; }
+.agent-admin .agent-dialog-header { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+.agent-admin .agent-dialog-header h2 { font-size:28px; margin:12px 0 6px; }
+.agent-admin .agent-dialog-header p { margin:0; overflow-wrap:anywhere; }
+.agent-admin .agent-dialog-header button { flex-shrink:0; }
+.agent-admin .agent-dialog-section { border-top:1px solid #e3e8df; padding-top:20px; margin-top:24px; }
+.agent-admin .agent-dialog-section h3 { font:22px Georgia,serif; margin:0 0 12px; }
+.agent-admin .agent-dialog-section form { margin-top:0; }
+.agent-admin .agent-dialog-section .platform-link-result { margin-top:16px; }
+.agent-admin .agent-dialog-message { padding:12px; background:#e6f2e8; border-radius:5px; color:#285748; }
+@media(max-width:600px){.agent-admin .agent-website-dialog{padding:20px;max-height:calc(100dvh - 24px);}.agent-admin .agent-dialog-header h2{font-size:24px;}}
