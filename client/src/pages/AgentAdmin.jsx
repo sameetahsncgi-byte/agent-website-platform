@@ -1,3 +1,4 @@
+import {agentAdminHref} from '../services/agentPortal.js';
 import SeoEditor from '../components/SeoEditor.jsx';
 import { watchWebsiteSettings } from '../services/websiteSync.js';
 import SubdomainEditor from '../components/SubdomainEditor.jsx';
@@ -85,6 +86,7 @@ export default function AgentAdmin() {
         <section className="admin-overview"><span className="admin-label">YOUR AGENT PORTAL</span><h1>Welcome, {agent.name}.</h1><p>Manage your About Me page, contact details, and website images.</p>
           {error && <p role="alert" className="admin-error">{error}</p>}
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">{agentWebsiteHref(agent)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
+          {agentAdminHref(agent) && window.location.origin!==new URL(agentAdminHref(agent)).origin && <p className="admin-error" role="status">Your agent admin portal is <a href={agentAdminHref(agent)}>{agentAdminHref(agent)}</a>. Open it and sign in there to use your own website address. Your current unsaved edits are kept here until you leave.</p>}
           {!agent.websiteEnabled && <p className="admin-error" role="status">Your public website is disabled by the platform administrator. You can still edit and save your content here.</p>}
           {syncError && <p className="admin-error" role="alert">{syncError}</p>}
           <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={domainChanged} />

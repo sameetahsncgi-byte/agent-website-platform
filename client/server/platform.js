@@ -1,3 +1,4 @@
+import {agentPortalOrigin} from '../src/services/agentPortal.js';
 import { createClient } from '@supabase/supabase-js';
 
 export function httpError(status, message) {
@@ -78,8 +79,15 @@ export function validateAgent(body) {
   if (!isUuid(body.requestId)) throw httpError(400, 'Refresh the form and try again.');
   return { name, email, slug, requestId: body.requestId };
 }
+export async function onboardingOrigin(client,record){
+  const {data,error}=await client.from('agent_website_settings').select('subdomain_slug').eq('site_id',record.site_id).maybeSingle();
+  if(error)throw httpError(503,'Unable to load the agent portal address.');
+  try{return agentPortalOrigin(data?.subdomain_slug || record.site_slug);}catch{throw httpError(503,'The agent website name needs administrator review.');}
+}
 export async function makeInvitation(client, record, env) {
   if (record.status !== 'invited') throw httpError(409, 'This agent has already completed onboarding.');
+  appOrigin(env);
+  const portalOrigin=await onboardingOrigin(client,record);
   const { data: accountData, error: accountError } = await client.auth.admin.getUserById(record.user_id);
   if (accountError || !accountData?.user || accountData.user.email?.toLowerCase() !== record.email) throw httpError(409, 'The agent account no longer matches this invitation.');
   // An accepted invitation with unfinished setup needs a recovery link.
@@ -87,7 +95,7 @@ export async function makeInvitation(client, record, env) {
   const { data, error } = await client.auth.admin.generateLink({ type, email: record.email });
   if (error || !data?.properties?.hashed_token || data.user?.id !== record.user_id) throw httpError(502, 'Unable to generate the link. The pending account is saved; use New link to try again.');
   const params = new URLSearchParams({ token_hash: data.properties.hashed_token, type });
-  return { url: `${appOrigin(env)}/#/onboarding?${params}`, type };
+  return { url: `${portalOrigin}/onboarding#${params}`, adminUrl:`${portalOrigin}/admin`, websiteUrl:`${portalOrigin}/`, type };
 }
 export function sendError(res, error) {
   return res.status(error.status || 500).json({ error: error.status ? error.message : 'Unable to complete the request. Try again shortly.' });

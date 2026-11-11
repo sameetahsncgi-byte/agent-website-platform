@@ -1,3 +1,4 @@
+import {agentAdminHref} from '../services/agentPortal.js';
 import {useEffect,useRef,useState} from 'react';
 import {agentWebsiteHref} from '../services/siteRouting.js';
 
@@ -69,6 +70,7 @@ export default function AgentWebsiteDialog({website,busy,error,message,save,rege
     {website.onboardingStatus==='invited' && website.user_id && <section className="agent-dialog-section"><h3>Account setup</h3><p>The agent has not completed onboarding.</p><button type="button" className="admin-secondary" disabled={busy} onClick={newLink}>Generate new onboarding link</button>
       {invitation && <div className="platform-link-result"><label htmlFor="agent-dialog-link">Share this setup link privately</label><textarea id="agent-dialog-link" rows={3} readOnly value={invitation.onboardingUrl} onFocus={event=>event.target.select()}/><button type="button" className="admin-secondary" onClick={copy}>{copied?'Copied':'Copy link'}</button><p className="platform-help">This link grants account access. It is single-use and expires according to your Supabase Auth settings.</p>{copyError && <p role="alert">{copyError}</p>}</div>}
     </section>}
+    {agentAdminHref(website) && <p><a href={agentAdminHref(website)} target="_blank" rel="noopener noreferrer">Open agent admin portal ↗</a></p>}
     <p className="platform-help">Website ID: {website.site_id}</p>
   </dialog>;
 }

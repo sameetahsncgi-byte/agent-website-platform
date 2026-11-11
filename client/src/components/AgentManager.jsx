@@ -45,6 +45,7 @@ export default function AgentManager() {
     {error && <p role="alert" className="admin-error">{error}</p>}
     {result && <div className="platform-link-result" role="status">
       <p><strong>Public website: </strong><a href={result.websiteUrl || defaultAgentUrl(result.agent.site_slug)} target="_blank" rel="noopener noreferrer">{result.websiteUrl || defaultAgentUrl(result.agent.site_slug)}</a></p>
+      {result.adminUrl && <p><strong>Agent admin portal: </strong><a href={result.adminUrl} target="_blank" rel="noopener noreferrer">{result.adminUrl}</a></p>}
       <span className="admin-label">PRIVATE ONBOARDING LINK</span><h3>{result.agent.name}</h3><p>{result.agent.email}</p>
       <label htmlFor="generated-onboarding-link">Copy and share this link privately</label>
       <textarea id="generated-onboarding-link" rows={3} readOnly value={result.onboardingUrl} onFocus={e=>e.target.select()}/>

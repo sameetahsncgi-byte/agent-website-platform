@@ -1,17 +1,20 @@
-import { createServerClient, httpError, readBody, responseHeaders, sameOrigin, sendError, verifiedUser } from '../../server/platform.js';
+import { createServerClient, httpError, readBody, responseHeaders, appOrigin, onboardingOrigin, sendError, verifiedUser } from '../../server/platform.js';
 export function makeCompletionHandler({ getClient = createServerClient, env = process.env } = {}) {
   return async function handler(req, res) {
     responseHeaders(res);
     let passwordSaved = false;
     try {
       if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); throw httpError(405, 'Method not allowed.'); }
-      sameOrigin(req, env);
       const body = await readBody(req);
       const client = getClient(env);
       const user = await verifiedUser(req, client);
-      const { data: record, error: recordError } = await client.from('agent_onboarding').select('user_id, site_id, status').eq('user_id', user.id).maybeSingle();
+      const { data: record, error: recordError } = await client.from('agent_onboarding').select('user_id, site_id, site_slug, status').eq('user_id', user.id).maybeSingle();
       if (recordError) throw httpError(503, 'Unable to load onboarding information.');
       if (!record || !user.email_confirmed_at) throw httpError(403, 'Accept your agent invitation before setting a password.');
+      const portalOrigin=await onboardingOrigin(client,record);
+      // Keep legacy platform-origin invitations working. Any agent-domain
+      // request must match THIS token-verified recipient's current portal.
+      if(req.headers.origin!==appOrigin(env) && req.headers.origin!==portalOrigin)throw httpError(403,'Open the onboarding link for your own agent website.');
       if (record.status === 'invited') {
         passwordSaved = user.app_metadata?.agent_onboarding_password_set === true;
         if (!passwordSaved) {
@@ -30,7 +33,7 @@ export function makeCompletionHandler({ getClient = createServerClient, env = pr
       if (error) {
         return res.status(403).json({ error: passwordSaved ? 'Your password was saved, but account activation could not finish. Retry activation or contact your administrator.' : 'This account cannot be activated. Contact your platform administrator.', passwordSaved });
       }
-      return res.status(200).json({ siteId });
+      return res.status(200).json({ siteId,adminUrl:`${portalOrigin}/admin` });
     } catch (error) { return sendError(res, error); }
   };
 }

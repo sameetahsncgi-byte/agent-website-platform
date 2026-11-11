@@ -24,7 +24,7 @@ function fixture(options={}){
   from(table){
    const filters=[];
    function result(single=false){
-    let data=table==='platform_admins'?[{user_id:options.actor||owner,active:options.admin!==false}]:records;
+    let data=table==='platform_admins'?[{user_id:options.actor||owner,active:options.admin!==false}]:table==='agent_website_settings'?[{site_id:'site-jordan',subdomain_slug:options.currentSlug || 'jordan'}]:records;
     if(options.missingMembership&&table==='platform_admins')data=[];
     for(const [key,value]of filters)data=data.filter(row=>row[key]===value);
     return{data:single?(data[0]||null):data,error:options.schemaError&&table==='agent_onboarding'?{}:null};
@@ -46,7 +46,8 @@ function fixture(options={}){
 test('verified administrator can provision and get a private link without sending email',async()=>{
  const f=fixture();const res=await f.run(f.agents,f.req({...input,p_admin_id:'attacker',userId:'attacker'}));
  assert.equal(res.body.websiteUrl,'https://jordan.brokerage.sncgi.com/');
- assert.equal(res.code,201);assert.match(res.body.onboardingUrl,/^https:\/\/platform.example.com\/#\/onboarding\?token_hash=/);
+ assert.equal(res.code,201);assert.match(res.body.onboardingUrl,/^https:\/\/jordan.brokerage.sncgi.com\/onboarding#token_hash=/);
+ assert.equal(res.body.adminUrl,'https://jordan.brokerage.sncgi.com/admin');
  assert.equal(res.headers['Cache-Control'],'no-store, private');
  assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_admin_id,owner);
  assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_user_id,agent);
@@ -107,4 +108,26 @@ test('password setup cannot modify unrelated or already activated accounts',asyn
  const records=[{user_id:agent,site_id:'site-jordan',status:'active'}];
  const g=fixture({actor:agent,records});assert.equal((await g.run(g.completion,g.req({password:'long-test-password'}))).code,200);assert.ok(!g.calls.some(c=>c[0]==='password'));
  const h=fixture({actor:agent,records:[{...records[0],status:'invited'}],unconfirmed:true});assert.equal((await h.run(h.completion,h.req({password:'long-test-password'}))).code,403);assert.ok(!h.calls.some(c=>c[0]==='password'));
+});
+
+test('onboarding completes on the verified recipient portal but rejects another agent or arbitrary origin',async()=>{
+ const records=[{user_id:agent,site_id:'site-jordan',site_slug:'jordan',status:'invited'}];
+ const portal='https://jordan.brokerage.sncgi.com';
+ const f=fixture({actor:agent,records});
+ const result=await f.run(f.completion,f.req({password:'A-long-test-password',userId:owner},{headers:{authorization:'Bearer valid-token',origin:portal,'content-type':'application/json'}}));
+ assert.equal(result.code,200);assert.equal(result.body.adminUrl,portal+'/admin');
+ for(const origin of ['https://other-agent.brokerage.sncgi.com','https://attacker.example','http://jordan.brokerage.sncgi.com']){
+  const denied=fixture({actor:agent,records});
+  const response=await denied.run(denied.completion,denied.req({password:'A-long-test-password'},{headers:{authorization:'Bearer valid-token',origin,'content-type':'application/json'}}));
+  assert.equal(response.code,403);assert.ok(!denied.calls.some(call=>call[0]==='password' || call[0]==='rpc'));
+ }
+});
+test('new invitation generation uses the current reserved slug after a domain rename',async()=>{
+ const records=[{user_id:agent,site_id:'site-jordan',site_slug:'jordan',status:'invited',email:'agent@example.com'}];
+ const f=fixture({records,currentSlug:'renamed-jordan'});
+ const result=await f.run(f.agents,f.req({action:'regenerate',userId:agent}));
+ assert.equal(result.code,200);
+ assert.ok(result.body.onboardingUrl.startsWith('https://renamed-jordan.brokerage.sncgi.com/onboarding#'));
+ assert.equal(result.body.adminUrl,'https://renamed-jordan.brokerage.sncgi.com/admin');
+ assert.ok(!result.body.adminUrl.includes('token_hash'));assert.ok(!result.body.adminUrl.includes('?site='));
 });

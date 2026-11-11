@@ -1,4 +1,3 @@
-import { defaultAgentUrl } from '../../src/services/agentSubdomains.js';
 import { appOrigin, createServerClient, httpError, isUuid, makeInvitation, readBody, responseHeaders, sameOrigin, sendError, validateAgent, verifiedAdmin } from '../../server/platform.js';
 const columns = 'user_id, site_id, name, email, site_slug, status, created_at, completed_at';
 export function makeAgentsHandler({ getClient = createServerClient, env = process.env } = {}) {
@@ -22,7 +21,7 @@ export function makeAgentsHandler({ getClient = createServerClient, env = proces
         if (error) throw httpError(503, 'Unable to load the invitation.');
         if (!record) throw httpError(404, 'Agent not found.');
         const invitation = await makeInvitation(client, record, env);
-        return res.status(200).json({ agent: record, onboardingUrl: invitation.url, websiteUrl: defaultAgentUrl(record.site_slug) });
+        return res.status(200).json({ agent: record, onboardingUrl: invitation.url, adminUrl: invitation.adminUrl, websiteUrl: invitation.websiteUrl });
       }
       if (body.action !== 'create') throw httpError(400, 'Choose a supported action.');
       const input = validateAgent(body);
@@ -32,7 +31,7 @@ export function makeAgentsHandler({ getClient = createServerClient, env = proces
       if (previous) {
         if (previous.created_by !== admin.id || previous.name !== input.name || previous.email !== input.email || previous.site_slug !== input.slug) throw httpError(409, 'This form request was already used. Refresh and try again.');
         const invitation = await makeInvitation(client, previous, env);
-        return res.status(200).json({ agent: previous, onboardingUrl: invitation.url, websiteUrl: defaultAgentUrl(previous.site_slug) });
+        return res.status(200).json({ agent: previous, onboardingUrl: invitation.url, adminUrl: invitation.adminUrl, websiteUrl: invitation.websiteUrl });
       }
       const { data: used, error: usedError } = await client.from('agent_onboarding').select('site_slug').eq('site_slug', input.slug).maybeSingle();
       if (usedError) throw httpError(503, 'Unable to check the website handle.');
@@ -52,7 +51,7 @@ export function makeAgentsHandler({ getClient = createServerClient, env = proces
         if (checkError) throw httpError(503, 'Account setup needs review. Check Authentication and onboarding records before retrying.');
         if (provisioned) {
           const invitation = await makeInvitation(client, provisioned, env);
-          return res.status(201).json({ agent: provisioned, onboardingUrl: invitation.url, websiteUrl: defaultAgentUrl(provisioned.site_slug) });
+          return res.status(201).json({ agent: provisioned, onboardingUrl: invitation.url, adminUrl: invitation.adminUrl, websiteUrl: invitation.websiteUrl });
         }
         if (!/^[0-9A-Z]{5}$/.test(provisionError.code || '')) throw httpError(503, 'Account setup needs review. Refresh the list before retrying; the database result was uncertain.');
         const { error: cleanupError } = await client.auth.admin.deleteUser(userId);
@@ -61,7 +60,7 @@ export function makeAgentsHandler({ getClient = createServerClient, env = proces
       }
       const record = { user_id: userId, site_id: siteId, name: input.name, email: input.email, site_slug: input.slug, status: 'invited' };
       const invitation = await makeInvitation(client, record, env);
-      return res.status(201).json({ agent: record, onboardingUrl: invitation.url, websiteUrl: defaultAgentUrl(record.site_slug) });
+      return res.status(201).json({ agent: record, onboardingUrl: invitation.url, adminUrl: invitation.adminUrl, websiteUrl: invitation.websiteUrl });
     } catch (error) { return sendError(res, error); }
   };
 }
