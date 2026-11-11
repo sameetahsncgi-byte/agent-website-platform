@@ -22,9 +22,9 @@ export function makeAuthRequest(getClient) {
       throw authError('Agent access has not been enabled for this account. Contact your administrator.', 403);
     }
     const { data: settings, error: settingsError } = await client.from('agent_website_settings')
-      .select('hostname, enabled, subdomain_slug').eq('site_id', profile.site_id).maybeSingle();
-    if (settingsError) throw authError('Unable to load website settings. Ask your administrator to run setup-website-controls.sql.', 503);
-    return { agent: { id: profile.agent_id, name: profile.name, role: profile.role, siteId: profile.site_id, hostname: settings?.hostname || (settings?.subdomain_slug ? `${settings.subdomain_slug}.brokerage.sncgi.com` : null), subdomainSlug: settings?.subdomain_slug || '', websiteEnabled: settings?.enabled ?? true } };
+      .select('hostname, enabled, subdomain_slug, domain_locked').eq('site_id', profile.site_id).maybeSingle();
+    if (settingsError) throw authError('Unable to load website settings. Ask your administrator to run setup-domain-locks.sql after the previous migrations.', 503);
+    return { agent: { id: profile.agent_id, name: profile.name, role: profile.role, siteId: profile.site_id, hostname: settings?.hostname || (settings?.subdomain_slug ? `${settings.subdomain_slug}.brokerage.sncgi.com` : null), subdomainSlug: settings?.subdomain_slug || '', websiteEnabled: settings?.enabled ?? true, domainLocked: settings?.domain_locked === true } };
   }
   return async function request(path, body) {
     const client = getClient();

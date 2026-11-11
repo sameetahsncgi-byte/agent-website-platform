@@ -20,3 +20,7 @@ test('invalid handles never call Supabase and conflict errors are understandable
     await assert.rejects(makeSubdomainRename(()=>({rpc:async()=>({error:{code}})}))('valid-name'),message);
   }
 });
+
+test('database domain lock rejection shows the exact support message',async()=>{
+  await assert.rejects(makeSubdomainRename(()=>({rpc:async()=>({error:{code:'P0423'}})}))('new-name'),/^Error: Domain is locked\. Please contact support\.$/);
+});

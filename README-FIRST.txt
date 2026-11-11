@@ -1,47 +1,50 @@
-EDITABLE AGENT WEBSITE NAMES
-
-This fixes the old reservation error when changing a brokerage hostname and adds an agent self-service website name editor.
-Example: rizwan-sabbir.brokerage.sncgi.com -> rizz-sabbir.brokerage.sncgi.com
-The internal website ID stays site-rizwan-sabbir. Content, profile, login and uploaded images are not moved or recreated.
+DOMAIN NAME LOCKS, DASHBOARD SYNC AND RETIRED ADDRESSES
 
 INSTALL
-1. Keep all previous updates, accounts, content, environment variables, DNS and wildcard settings. Back up the matching files.
-2. Extract this ZIP and merge its client and supabase folders into your existing project root. Replace matching files only. Do not replace/delete the whole src folder.
-3. Supabase > SQL Editor > New query: run ALL of supabase/setup-editable-subdomains.sql. This requires the previous setup-automatic-subdomains.sql migration. Expected result: Editable brokerage subdomains are ready.
-4. Commit and push the files to your existing GitHub repository and wait for Vercel to finish deploying.
-5. Refresh the agent dashboard and Super Admin. If necessary, log out and back in so the new website settings load.
-No new environment variables, dependencies, Vercel API keys, domains or GoDaddy DNS changes are required.
+1. Keep all accounts, content, prior updates, environment variables, DNS and Vercel settings. Back up matching files.
+2. Extract and merge this ZIP's client and supabase folders into your project root. Replace matching files only; do not delete/replace the whole src folder.
+3. In Supabase > SQL Editor run ALL of supabase/setup-domain-locks.sql. This requires the earlier setup-editable-subdomains.sql and previous migrations. Expected result: Domain locks and current-address routing are ready.
+4. Push the included files to your existing GitHub repository and wait for Vercel to deploy.
+5. Refresh both dashboards or log back in to load the new settings.
+No new dependencies, environment variables or DNS records are required.
 
-AGENT DASHBOARD
-The agent signs in and opens Your website address, above the content editor.
-Enter ONLY the changeable part, for example rizz-sabbir, in Website name.
-The suffix .brokerage.sncgi.com is shown separately and cannot be edited.
-Click Save website name. The current agent's View my website / About Me / Contact / View live page links update after success.
-Use 3-40 letters, numbers or single hyphens. Input is trimmed and converted to lowercase. Names must be unique; system names such as admin/api/www are reserved.
-An agent can change only their own active account's website. A pending invite recipient must finish onboarding before using the editor.
-Unsaved website content edits remain in the editor when the address changes. Save the content separately as usual.
-Changing the website address does not change the public Full name; that remains editable under About Me.
+NEW RENAME BEHAVIOR
+Changing first.brokerage.sncgi.com to second.brokerage.sncgi.com now makes only second.brokerage.sncgi.com display that agent's website. The old brokerage address shows Website unavailable; it does not redirect or continue displaying the website.
+The migration also retires historical brokerage aliases saved by the previous version. Old names remain reserved to the same website so another agent cannot claim them. They are retained only as private reservations, not active public routes.
+The wildcard DNS and HTTPS still cover these names. Inactive addresses can still reach the application shell, which displays Website unavailable rather than the agent's content. Already-open public pages recheck within about 30 seconds or on focus/refresh. New page loads check the current mapping immediately.
+Internal website IDs, content, images, accounts and the older platform ?site=... link remain unchanged. A brokerage rename does not change a separately configured purchased custom domain.
 
-SUPER ADMIN
-Continue using Website management > the agent > Website hostname.
-For the screenshot example enter the full hostname:
-rizz-sabbir.brokerage.sncgi.com
-Click Save hostname. Brokerage hostnames now use the atomic reservation/rename operation instead of the old direct mapping update that caused the error.
-Super Admin can rename a pending or active agent's address. The agent's internal website ID remains unchanged.
-If the agent already has a separate custom primary hostname, it stays primary; this rename changes their automatic brokerage address. The Automatic address link in Website management shows the updated name. Purchased custom domains still use the existing manual Vercel/DNS setup.
+LOCK / UNLOCK IN SUPER ADMIN
+Open Super Admin > Website management > the agent.
+Click Lock domain name to prevent the agent from renaming their brokerage address.
+The control changes to Unlock domain name and the row shows Domain name locked for agent.
+The agent sees exactly: Domain is locked. Please contact support.
+Their name input and save button are disabled. The database also rejects agent rename calls while locked, including direct API/RPC attempts or a stale browser form.
+Super Admin can still rename a locked domain. Unlock domain name restores the agent's rename option.
+Locking controls the domain name only; it does not disable the public website, prevent content edits, or alter the agent login.
+All existing domains start unlocked unless you explicitly lock them. New accounts also default to unlocked.
 
-PREVIOUS LINKS AND RESERVATIONS
-Previous brokerage subdomains keep opening the same website as aliases. They do not redirect in this version. Another agent cannot claim them. The current address is shown as the automatic/default address.
-Website Enable/Disable controls apply to all brokerage aliases and custom hostnames. Renaming never enables a disabled website or activates a pending/disabled account.
-Old names are intentionally retained; there is no interface to release an old reservation in this update.
-Browser sign-in is per hostname: opening a new hostname may require logging in there once. Existing content remains tied to the same website ID.
+SYNCHRONIZATION
+Both dashboards use the same saved hostname, subdomain and lock state.
+An agent rename updates the current settings and onboarding handle in the same database transaction. Super Admin reads those updated values in Website management and Agent accounts.
+Dashboards refresh on focus and every 10 seconds while visible. Tabs on the same browser origin also notify each other after a settings change. Across different subdomains/origins, use focus or allow up to 10 seconds for the next automatic refresh. Refresh websites / Check session remain available for a manual check.
+Background refresh keeps the content editor mounted, so unsaved biography/contact/theme edits are not cleared by a hostname or lock update.
+A background network error may delay the displayed update, but the database lock still enforces the current rule immediately.
+
+QUICK TEST
+Keep an agent dashboard and Super Admin open in separate tabs/windows.
+- Rename the agent address. Confirm Super Admin reflects the new hostname/handle after focus or within 10 seconds.
+- Open the old brokerage address in a fresh tab: it should show Website unavailable.
+- Lock domain name in Super Admin. Confirm the agent sees the support message and cannot edit the name.
+- Rename from Super Admin while locked: the new current address should update in the agent dashboard while the lock stays enabled.
+- Unlock, then confirm the agent can rename again.
 
 DATABASE SAFETY
-The migration adds a private handle reservation table and a current subdomain field. Public visitors can resolve only enabled website addresses, not list the reservation table.
-The self-service RPC identifies the agent from their authenticated user ID; the browser cannot supply another site or user ID. Super Admin renames pass the token-verified administrator ID from the server. Names are reserved and current settings updated in a single transaction.
-Existing custom domains, disabled states, website content and user accounts are preserved. New accounts created by the existing provisioning function reserve their handles automatically via a database trigger.
-The migration is rerunnable. If you rerun older migrations, run setup-editable-subdomains.sql LAST so the newest reservation and hostname functions are retained. You do not need to rerun older migrations for this installation.
+Previous names remain reserved and private. Only the current brokerage slug resolves publicly. Existing custom domains and website enable/disable states are preserved.
+Only the token-verified Super Admin backend can change the lock. Lock changes and renames serialize on the same profile row, preventing the agent operation from bypassing a committed lock. The authenticated agent rename wrapper never accepts another site/user ID from the browser.
+The migration is rerunnable and does not reset existing locks. If you ever rerun older setup scripts, run setup-domain-locks.sql LAST to retain the latest behavior. Older migrations do not need to be rerun for this installation.
 
-VALIDATION
-40 automated tests passed and production build passed. Isolated PostgreSQL-compatible checks verified owner rename, unchanged content/site ID, preserved aliases, cross-agent denial, anonymous denial, service-only administrative operation, pending account restrictions, invalid/reserved names, custom domain and disabled-state preservation, protection against future accounts reclaiming aliases, fresh website provisioning, and migration reruns.
-Local browser checks verified the new name editor, updated dashboard links, preserved unsaved content, success feedback and duplicate-name feedback. Temporary QA adapters were restored before packaging. Your live Supabase database and Vercel deployment have not been changed by this download.
+VERIFICATION
+44 automated tests passed, including domain lock API authorization, direct-RPC error feedback, dashboard refresh events, lock/hostname reload, existing login/onboarding/website controls, and content validation. Production build passed.
+Isolated PostgreSQL-compatible checks passed for retirement of prior addresses, current address resolution, database-enforced agent lock, denial of self-unlock, Super Admin override, agent rename after unlock, consistent settings/onboarding handles, preserved custom domain/disabled state, and migration reruns.
+The two-tab browser check could not be completed because the browser transport disconnected. Temporary QA adapters were restored before packaging. Your live Supabase and Vercel application code have not been changed by this download.

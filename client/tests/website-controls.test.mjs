@@ -6,11 +6,12 @@ import { agentWebsiteHref } from '../src/services/siteRouting.js';
 import { normalizeHostname } from '../src/services/hostnames.js';
 function fixture(options = {}) {
   const writes = []; const rpcCalls = [];
-  const settings = { publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
+  const settings = { domain_locked: options.locked===true, publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
   const profiles = [{ site_id: settings.site_id, name: 'Yasir Fareed', active: !options.pending, role: 'agent' }, { site_id: 'site-original', name: 'Original Agent', active: true, role: 'agent' }];
   const client = {
     rpc:async(name,args)=>{
       rpcCalls.push([name,args]);
+      if(name==='set_agent_domain_lock'){settings.domain_locked=args.p_locked;return {data:{...settings}};}
       return options.duplicate?{error:{code:'23505'}}:{data:{site_id:args.p_site_id,enabled:settings.enabled,subdomain_slug:args.p_slug,hostname:args.p_slug+'.brokerage.sncgi.com'}};
     },
     auth: { getUser: async () => options.invalid ? { error: {} } : { data: { user: { id: 'admin' } } } },
@@ -114,4 +115,18 @@ test('Super Admin hostname changes use the atomic rename operation and verified 
   assert.equal(f.writes.length,0);
   assert.equal(result.body.website.defaultHostname,'rizz-sabbir.brokerage.sncgi.com');
   assert.equal((await fixture({duplicate:true}).run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:'taken.brokerage.sncgi.com'})).code,409);
+});
+
+test('domain locks use a verified Super Admin actor and reject unauthorized callers',async()=>{
+  const f=fixture();
+  let result=await f.run({action:'set-domain-locked',siteId:'site-yasir-fareed',locked:true,p_actor:'forged'});
+  assert.equal(result.code,200);assert.equal(result.body.website.domainLocked,true);
+  assert.deepEqual(f.rpcCalls[0],['set_agent_domain_lock',{p_site_id:'site-yasir-fareed',p_locked:true,p_actor:'admin'}]);
+  assert.equal(f.writes.length,0);
+  result=await f.run(undefined,{method:'GET'});assert.equal(result.body.websites[0].domainLocked,true);
+  result=await f.run({action:'set-domain-locked',siteId:'site-yasir-fareed',locked:false});assert.equal(result.body.website.domainLocked,false);
+  assert.equal((await f.run({action:'set-domain-locked',siteId:'site-yasir-fareed',locked:'false'})).code,400);
+  const agent=fixture({notAdmin:true});
+  assert.equal((await agent.run({action:'set-domain-locked',siteId:'site-yasir-fareed',locked:false})).code,403);
+  assert.equal(agent.rpcCalls.length,0);
 });

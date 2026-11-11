@@ -5,6 +5,7 @@ export function normalizeSubdomain(value) {
   return slug;
 }
 export function subdomainError(error) {
+  if(error?.code==='P0423') return 'Domain is locked. Please contact support.';
   if(error?.code==='23505') return 'That website name is already used or reserved. Choose another.';
   if(error?.code==='42501') return 'Sign in with an active agent account to change your website name.';
   if(error?.code==='22023') return 'Choose a valid website name. Admin, api, www and other system names are reserved.';

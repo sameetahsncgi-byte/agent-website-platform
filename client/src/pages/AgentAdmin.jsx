@@ -1,5 +1,6 @@
+import { watchWebsiteSettings } from '../services/websiteSync.js';
 import SubdomainEditor from '../components/SubdomainEditor.jsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { agentWebsiteHref } from '../services/siteRouting.js';
 import { authRequest } from '../services/auth.js';
 import { getSupabase } from '../services/supabase.js';
@@ -7,6 +8,7 @@ import '../styles/AgentAdmin.css';
 import AgentContentEditor from '../components/AgentContentEditor.jsx';
 
 export default function AgentAdmin() {
+  const syncVersion=useRef(0);
   const [agent, setAgent] = useState(null);
   const [editorDirty, setEditorDirty] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -29,6 +31,23 @@ export default function AgentAdmin() {
     } catch { /* Missing configuration is reported by authRequest above. */ }
     return () => { active = false; subscription?.unsubscribe(); };
   }, [attempt]);
+  useEffect(() => {
+    if(!agent?.id) return;
+    let active=true;
+    const id=agent.id;
+    async function refreshWebsiteSettings(){
+      const version=++syncVersion.current;
+      try {
+        const data=await authRequest('/api/admin/me');
+        if(active && version===syncVersion.current) setAgent(current=>current?.id===id?data.agent:current);
+      } catch(error) {
+        if(active && version===syncVersion.current && [401,403].includes(error.status)){setAgent(null);setError(error.message);}
+      }
+    }
+    const stop=watchWebsiteSettings(refreshWebsiteSettings);
+    return ()=>{active=false;stop();};
+  },[agent?.id]);
+  function domainChanged(updated){syncVersion.current++;setAgent(updated);}
   async function login(event) {
     event.preventDefault(); setBusy(true); setError('');
     try { const data = await authRequest('/api/auth/login', { id, password }); setAgent(data.agent); setPassword(''); }
@@ -58,7 +77,7 @@ export default function AgentAdmin() {
           {error && <p role="alert" className="admin-error">{error}</p>}
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">{agentWebsiteHref(agent)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           {!agent.websiteEnabled && <p className="admin-error" role="status">Your public website is disabled by the platform administrator. You can still edit and save your content here.</p>}
-          <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={setAgent} />
+          <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={domainChanged} />
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
         </section>
       </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>

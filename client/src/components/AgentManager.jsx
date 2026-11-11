@@ -1,3 +1,4 @@
+import { watchWebsiteSettings } from '../services/websiteSync.js';
 import { defaultAgentUrl } from '../services/agentSubdomains.js';
 import { useEffect, useState } from 'react';
 import { adminPlatformRequest } from '../services/platformApi.js';
@@ -19,7 +20,10 @@ export default function AgentManager() {
     adminPlatformRequest('/api/platform/agents').then(data => { if (active) setAgents(data.agents); })
       .catch(error => { if (active) setListError(error.message); })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    const stop=watchWebsiteSettings(()=>{
+      adminPlatformRequest('/api/platform/agents').then(data=>{if(active)setAgents(data.agents);}).catch(()=>{});
+    });
+    return () => { active = false; stop(); };
   }, [refresh]);
   function update(key, value) {
     setForm(current => ({ ...current, [key]:value }));
