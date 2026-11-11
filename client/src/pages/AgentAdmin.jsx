@@ -13,6 +13,7 @@ export default function AgentAdmin() {
   const [editorDirty, setEditorDirty] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
+  const [syncError, setSyncError] = useState('');
   const [busy, setBusy] = useState(false);
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
@@ -35,14 +36,20 @@ export default function AgentAdmin() {
     if(!agent?.id) return;
     let active=true;
     const id=agent.id;
+    let refreshing=false;
     async function refreshWebsiteSettings(){
+      if(refreshing)return;
+      refreshing=true;
       const version=++syncVersion.current;
       try {
         const data=await authRequest('/api/admin/me');
-        if(active && version===syncVersion.current) setAgent(current=>current?.id===id?data.agent:current);
+        if(active && version===syncVersion.current){setAgent(current=>current?.id===id?data.agent:current);setSyncError('');}
       } catch(error) {
-        if(active && version===syncVersion.current && [401,403].includes(error.status)){setAgent(null);setError(error.message);}
-      }
+        if(active && version===syncVersion.current){
+          if([401,403].includes(error.status)){setAgent(null);setError(error.message);}
+          else setSyncError('Website settings could not refresh. '+error.message);
+        }
+      } finally { refreshing=false; }
     }
     const stop=watchWebsiteSettings(refreshWebsiteSettings);
     return ()=>{active=false;stop();};
@@ -77,6 +84,7 @@ export default function AgentAdmin() {
           {error && <p role="alert" className="admin-error">{error}</p>}
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">{agentWebsiteHref(agent)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           {!agent.websiteEnabled && <p className="admin-error" role="status">Your public website is disabled by the platform administrator. You can still edit and save your content here.</p>}
+          {syncError && <p className="admin-error" role="alert">{syncError}</p>}
           <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={domainChanged} />
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
         </section>

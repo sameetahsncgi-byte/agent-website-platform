@@ -6,10 +6,12 @@ export function notifyWebsiteSettingsChanged() {
 }
 export function watchWebsiteSettings(refresh) {
   const focused=()=>refresh();
+  const visible=()=>{if(document.visibilityState==='visible')refresh();};
   const stored=event=>{if(event.key===eventName)refresh();};
   const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh();},10000);
+  document.addEventListener?.('visibilitychange',visible);
   window.addEventListener('focus',focused);
   window.addEventListener(eventName,focused);
   window.addEventListener('storage',stored);
-  return ()=>{window.clearInterval(timer);window.removeEventListener('focus',focused);window.removeEventListener(eventName,focused);window.removeEventListener('storage',stored);};
+  return ()=>{document.removeEventListener?.('visibilitychange',visible);window.clearInterval(timer);window.removeEventListener('focus',focused);window.removeEventListener(eventName,focused);window.removeEventListener('storage',stored);};
 }

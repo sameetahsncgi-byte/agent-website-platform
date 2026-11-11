@@ -6,13 +6,15 @@ import { agentWebsiteHref } from '../src/services/siteRouting.js';
 import { normalizeHostname } from '../src/services/hostnames.js';
 function fixture(options = {}) {
   const writes = []; const rpcCalls = [];
-  const settings = { domain_locked: options.locked===true, publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
+  const settings = { domain_locked: options.locked===true, publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' };
   const profiles = [{ site_id: settings.site_id, name: 'Yasir Fareed', active: !options.pending, role: 'agent' }, { site_id: 'site-original', name: 'Original Agent', active: true, role: 'agent' }];
   const client = {
     rpc:async(name,args)=>{
       rpcCalls.push([name,args]);
       if(name==='set_agent_domain_lock'){settings.domain_locked=args.p_locked;return {data:{...settings}};}
-      return options.duplicate?{error:{code:'23505'}}:{data:{site_id:args.p_site_id,enabled:settings.enabled,subdomain_slug:args.p_slug,hostname:args.p_slug+'.brokerage.sncgi.com'}};
+      if(options.duplicate)return {error:{code:'23505'}};
+      Object.assign(settings,{subdomain_slug:args.p_slug,hostname:args.p_slug+'.brokerage.sncgi.com'});
+      return {data:{...settings}};
     },
     auth: { getUser: async () => options.invalid ? { error: {} } : { data: { user: { id: 'admin' } } } },
     from(table) {
@@ -57,12 +59,14 @@ test('disabling a website preserves hostname, profile and original agents are li
   assert.equal(list.body.websites[1].enabled, true);
   assert.equal(list.body.websites[0].active, true);
 });
-test('hostnames are normalized, duplicates rejected, and removing a mapping preserves publishing status', async () => {
+test('hostnames are normalized, duplicates rejected, and removal actions are rejected', async () => {
   const f = fixture(); f.settings.enabled = false;
   assert.equal((await f.run({ action: 'set-hostname', siteId: 'site-yasir-fareed', hostname: ' YASIR.EXAMPLE.COM ' })).code, 200);
   assert.equal(f.settings.hostname, 'yasir.example.com'); assert.equal(f.settings.enabled, false);
-  assert.equal((await f.run({ action: 'remove-hostname', siteId: 'site-yasir-fareed' })).code, 200);
-  assert.equal(f.settings.hostname, null); assert.equal(f.settings.enabled, false);
+  assert.equal((await f.run({ action: 'remove-hostname', siteId: 'site-yasir-fareed' })).code, 400);
+  assert.equal(f.settings.hostname, 'yasir.example.com'); assert.equal(f.settings.enabled, false);
+  assert.equal((await f.run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:''})).code,400);
+  assert.equal(f.writes.length,1);
   assert.equal((await fixture({ duplicate: true }).run({ action: 'set-hostname', siteId: 'site-yasir-fareed', hostname: 'taken.example.com' })).code, 409);
   for (const hostname of ['agent-website-platform.vercel.app', 'vercel.app', 'https://yasir.com', 'yasir.com/#/home', '*.yasir.com', 'evil.com:80', 'a@evil.com']) {
     assert.equal((await fixture().run({ action: 'set-hostname', siteId: 'site-yasir-fareed', hostname })).code, 400);
@@ -79,13 +83,13 @@ function publicFixture({ mapped = 'site-yasir-fareed', enabled = true, rpcError 
 }
 test('agent hostnames select only their mapped site and ignore query overrides', async () => {
   const f = publicFixture();
-  const data = await f.load({ hostname: 'yasir-agent-website-platform.vercel.app', search: '?site=site-other' });
+  const data = await f.load({ subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app', search: '?site=site-other' });
   assert.equal(data.siteId, 'site-yasir-fareed');
   assert.deepEqual(f.calls.at(-1), ['content', 'site-yasir-fareed']);
   assert.equal((await publicFixture().load({ hostname: 'agent-website-platform.vercel.app', search: '?site=site-jorden-muse' })).siteId, 'site-jorden-muse');
 });
 test('disabled query links, unknown hostnames and lookup failures never load another agent', async () => {
-  for (const location of [{ hostname: 'agent-website-platform.vercel.app', search: '?site=site-yasir-fareed' }, { hostname: 'yasir-agent-website-platform.vercel.app', search: '' }]) {
+  for (const location of [{ hostname: 'agent-website-platform.vercel.app', search: '?site=site-yasir-fareed' }, { subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app', search: '' }]) {
     const f = publicFixture({ enabled: false }); assert.equal((await f.load(location)).exists, false); assert.ok(!f.calls.some(row => row[0] === 'content'));
   }
   const f = publicFixture({ mapped: null });
@@ -95,7 +99,7 @@ test('disabled query links, unknown hostnames and lookup failures never load ano
 });
 test('dashboard links use assigned hostnames or the platform origin, never a different agent hostname', () => {
   const location = { hostname: 'other-agent.example.com', origin: 'https://other-agent.example.com' };
-  assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' }, 'contact', location), 'https://yasir-agent-website-platform.vercel.app/#/contact');
+  assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed', subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' }, 'contact', location), 'https://yasir-agent-website-platform.vercel.app/#/contact');
   assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed' }, 'home', location), 'https://agent-website-platform.vercel.app/?site=site-yasir-fareed#/home');
 });
 
@@ -111,9 +115,12 @@ test('Super Admin hostname changes use the atomic rename operation and verified 
   const f=fixture();
   const result=await f.run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:'RIZZ-SABBIR.brokerage.sncgi.com',p_actor:'forged'});
   assert.equal(result.code,200);
-  assert.deepEqual(f.rpcCalls,[['rename_agent_subdomain',{p_site_id:'site-yasir-fareed',p_slug:'rizz-sabbir',p_actor:'admin'}]]);
+  assert.deepEqual(f.rpcCalls,[['set_agent_brokerage_hostname',{p_site_id:'site-yasir-fareed',p_slug:'rizz-sabbir',p_actor:'admin'}]]);
   assert.equal(f.writes.length,0);
   assert.equal(result.body.website.defaultHostname,'rizz-sabbir.brokerage.sncgi.com');
+  const reread=await f.run(undefined,{method:'GET'});
+  assert.equal(reread.body.websites[0].hostname,result.body.website.hostname);
+  assert.equal(reread.body.websites[0].subdomainSlug,'rizz-sabbir');
   assert.equal((await fixture({duplicate:true}).run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:'taken.brokerage.sncgi.com'})).code,409);
 });
 

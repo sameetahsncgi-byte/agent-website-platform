@@ -21,9 +21,7 @@ function WebsiteRow({ website, busy, save }) {
       <label htmlFor={`hostname-${website.site_id}`}>Website hostname</label>
       <input id={`hostname-${website.site_id}`} value={hostname} onChange={event => setHostname(event.target.value)} placeholder="yasir.brokerage.sncgi.com" required maxLength={253} autoComplete="off" autoCapitalize="none" spellCheck={false} disabled={busy}/>
       <div className="website-control-actions"><button className="admin-secondary" disabled={busy} type="submit">Save hostname</button>
-      {website.hostname && <button className="admin-secondary" disabled={busy} type="button" onClick={() => {
-        if (window.confirm('Remove this hostname mapping? The automatic brokerage address and original platform link will still work if the website is enabled.')) save({ action: 'remove-hostname', siteId: website.site_id });
-      }}>Remove mapping</button>}</div>
+      </div>
       <p className="platform-help">Saving a new brokerage.sncgi.com hostname renames this agent’s automatic address. The previous brokerage address stops working after a rename. No separate Vercel entry is needed. For a custom domain, connect it in Vercel and configure DNS before saving it here.</p>
     </form>
   </article>;
@@ -39,15 +37,17 @@ export default function WebsiteManager() {
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active=true;
+    let refreshing=false;
     async function reload(initial=false){
-      if(busyRef.current && !initial) return;
+      if(refreshing || (busyRef.current && !initial)) return;
+      refreshing=true;
       const version=++listVersion.current;
       if(initial){setLoading(true);setError('');}
       try {
         const data=await adminPlatformRequest('/api/platform/websites');
         if(active && version===listVersion.current)setWebsites(data.websites);
       }catch(error){if(active && initial)setError(error.message);}
-      finally{if(active && initial)setLoading(false);}
+      finally{refreshing=false;if(active && initial)setLoading(false);}
     }
     reload(true);
     const stop=watchWebsiteSettings(()=>reload());
@@ -60,7 +60,7 @@ export default function WebsiteManager() {
       const { website } = await adminPlatformRequest('/api/platform/websites', body);
       setWebsites(current => current.map(row => row.site_id === website.site_id ? { ...row, ...website } : row));
       notifyWebsiteSettingsChanged();
-      setMessage(body.action === 'set-domain-locked' ? body.locked ? 'Domain name locked. The agent must contact support to change it.' : 'Domain name unlocked. The agent can change it again.' : body.action === 'set-hostname' ? 'Primary hostname saved. Automatic brokerage addresses use the wildcard. Other custom addresses must also be connected in Vercel.' : body.action === 'remove-hostname' ? 'Hostname mapping removed. Remove the unused address in Vercel too if it is no longer needed.' : body.enabled ? 'Website enabled. Automatically published starter websites do not require the agent to finish onboarding first.' : 'Public website disabled. Agent login and content are preserved. Open pages recheck within about 30 seconds when visible, or on refresh.');
+      setMessage(body.action === 'set-domain-locked' ? body.locked ? 'Domain name locked. The agent must contact support to change it.' : 'Domain name unlocked. The agent can change it again.' : body.action === 'set-hostname' ? 'Website address saved. Both dashboards refresh automatically within about 10 seconds.' : body.enabled ? 'Website enabled. Automatically published starter websites do not require the agent to finish onboarding first.' : 'Public website disabled. Agent login and content are preserved. Open pages recheck within about 30 seconds when visible, or on refresh.');
     } catch (error) { setError(error.message); }
     finally { busyRef.current=false;setBusy(false); }
   }
