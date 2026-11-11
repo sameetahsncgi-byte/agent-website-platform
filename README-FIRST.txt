@@ -1,46 +1,47 @@
-AUTOMATIC BROKERAGE SUBDOMAINS
+EDITABLE AGENT WEBSITE NAMES
 
-Your public address format: https://<chosen-handle>.brokerage.sncgi.com/
-This update uses the wildcard already added to the existing Vercel project.
-It does not require per-agent Vercel domains, new DNS records, or Vercel API tokens.
+This fixes the old reservation error when changing a brokerage hostname and adds an agent self-service website name editor.
+Example: rizwan-sabbir.brokerage.sncgi.com -> rizz-sabbir.brokerage.sncgi.com
+The internal website ID stays site-rizwan-sabbir. Content, profile, login and uploaded images are not moved or recreated.
 
-INSTALL IN THIS ORDER
-1. Keep all existing accounts, content, environment variables, DNS records and Vercel domains. Back up matching code files.
-2. Extract this ZIP. Merge the included client and supabase folders into your existing project root. Replace matching files only; do not delete the entire src folder.
-3. Supabase > SQL Editor > New query: paste and run ALL of supabase/setup-automatic-subdomains.sql. This requires your previous setup-website-controls.sql and onboarding setup to have been installed. Expected result: Automatic brokerage subdomains are ready.
-4. Commit/push the included code to your existing GitHub repository. Wait for Vercel's production deployment. No new packages or environment variables are required. Keep APP_URL=https://agent-website-platform.vercel.app.
-5. Refresh Super Admin at https://agent-website-platform.vercel.app/#/super-admin.
+INSTALL
+1. Keep all previous updates, accounts, content, environment variables, DNS and wildcard settings. Back up the matching files.
+2. Extract this ZIP and merge its client and supabase folders into your existing project root. Replace matching files only. Do not replace/delete the whole src folder.
+3. Supabase > SQL Editor > New query: run ALL of supabase/setup-editable-subdomains.sql. This requires the previous setup-automatic-subdomains.sql migration. Expected result: Editable brokerage subdomains are ready.
+4. Commit and push the files to your existing GitHub repository and wait for Vercel to finish deploying.
+5. Refresh the agent dashboard and Super Admin. If necessary, log out and back in so the new website settings load.
+No new environment variables, dependencies, Vercel API keys, domains or GoDaddy DNS changes are required.
 
-CREATE A NEW WEBSITE
-Enter agent name, an unused login email, and a unique website handle. Example handle: yasir.
-The form previews yasir.brokerage.sncgi.com. Click Create website & onboarding link.
-The backend creates the pending account, starter content and hostname settings in one database transaction. The website becomes public immediately, while editor access remains locked until the invitation is accepted and the password is set.
-The result shows TWO links: a public website address and a private onboarding link. Share the public address with anyone; share the onboarding link only with its intended agent. No invitation email is sent automatically.
-The site starts with the supplied name, a generic biography/headline, default theme and sample listings. The private login email is not copied into public contact information. Agents can fill their real public details, photos and branding after onboarding.
-No action in Vercel or GoDaddy is needed for each new agent under this wildcard.
+AGENT DASHBOARD
+The agent signs in and opens Your website address, above the content editor.
+Enter ONLY the changeable part, for example rizz-sabbir, in Website name.
+The suffix .brokerage.sncgi.com is shown separately and cannot be edited.
+Click Save website name. The current agent's View my website / About Me / Contact / View live page links update after success.
+Use 3-40 letters, numbers or single hyphens. Input is trimmed and converted to lowercase. Names must be unique; system names such as admin/api/www are reserved.
+An agent can change only their own active account's website. A pending invite recipient must finish onboarding before using the editor.
+Unsaved website content edits remain in the editor when the address changes. Save the content separately as usual.
+Changing the website address does not change the public Full name; that remains editable under About Me.
 
-EXISTING AGENTS
-Do not recreate existing accounts. The migration gives agents created through Super Admin an automatic address based on their EXISTING website handle, including accounts still waiting for onboarding. Existing disabled states, content and primary/custom hostnames are preserved.
-Example: site-yasir-fareed gets yasir-fareed.brokerage.sncgi.com, not yasir.brokerage.sncgi.com. The chosen handle determines the address.
-In Website management, click Refresh websites. Each onboarded agent now has an Automatic address link. If an existing primary hostname is already set, Visit website continues using it; the new automatic address works as well. To make the automatic address primary, save it in that agent's Website hostname field.
-The original manually enrolled demo account without an onboarding handle is left unchanged.
-If the migration reports a hostname conflict, its transaction rolls back; do not delete existing rows to force it through. Review the exact error first.
+SUPER ADMIN
+Continue using Website management > the agent > Website hostname.
+For the screenshot example enter the full hostname:
+rizz-sabbir.brokerage.sncgi.com
+Click Save hostname. Brokerage hostnames now use the atomic reservation/rename operation instead of the old direct mapping update that caused the error.
+Super Admin can rename a pending or active agent's address. The agent's internal website ID remains unchanged.
+If the agent already has a separate custom primary hostname, it stays primary; this rename changes their automatic brokerage address. The Automatic address link in Website management shows the updated name. Purchased custom domains still use the existing manual Vercel/DNS setup.
 
-ENABLE / DISABLE
-Existing controls remain. Disable website blocks its generated subdomain, assigned custom/legacy hostname, and older platform query link. Enable restores it.
-A starter can show Website live · account setup pending; this does NOT give the recipient editor access before verification. Completed accounts whose account access is later disabled remain unavailable publicly as well.
-Removing a primary hostname mapping does not release the reserved default subdomain. Disable the website if you want all of its public addresses unavailable.
-Existing visible pages recheck publishing status about every 30 seconds and on focus; refresh checks it immediately.
+PREVIOUS LINKS AND RESERVATIONS
+Previous brokerage subdomains keep opening the same website as aliases. They do not redirect in this version. Another agent cannot claim them. The current address is shown as the automatic/default address.
+Website Enable/Disable controls apply to all brokerage aliases and custom hostnames. Renaming never enables a disabled website or activates a pending/disabled account.
+Old names are intentionally retained; there is no interface to release an old reservation in this update.
+Browser sign-in is per hostname: opening a new hostname may require logging in there once. Existing content remains tied to the same website ID.
 
-DNS
-Keep GoDaddy's main nameservers and existing email/website records unchanged. Keep *.brokerage.sncgi.com attached to the existing Vercel project and preserve the certificate delegation and wildcard CNAME records. The root brokerage.sncgi.com is not covered by the wildcard; it does not need to be used as a public agent page.
-A DNS Change Recommended label can remain when Vercel recommends moving the whole DNS zone. What matters for the external-DNS setup is correct wildcard routing and working HTTPS. Before this package was prepared, yasir.brokerage.sncgi.com returned HTTPS 200 from this environment; this verifies connectivity, not that Yasir's content mapping was already installed.
-Custom domains outside brokerage.sncgi.com still require separate Vercel/DNS setup. That workflow has not been automated here.
-
-IMPORTANT
-This SQL intentionally publishes enabled pending starter websites. Disabled websites remain disabled. It never activates a pending agent profile or changes an auth password. Existing Supabase Row Level Security continues to protect editing, private settings and onboarding records.
-If you ever rerun older setup-onboarding.sql, setup-content.sql or setup-website-controls.sql, run setup-automatic-subdomains.sql LAST to restore the newest function definitions. No old scripts need rerunning for this installation.
-Wildcard HTTPS/DNS alone does not select agent content. This migration and code update are both necessary.
+DATABASE SAFETY
+The migration adds a private handle reservation table and a current subdomain field. Public visitors can resolve only enabled website addresses, not list the reservation table.
+The self-service RPC identifies the agent from their authenticated user ID; the browser cannot supply another site or user ID. Super Admin renames pass the token-verified administrator ID from the server. Names are reserved and current settings updated in a single transaction.
+Existing custom domains, disabled states, website content and user accounts are preserved. New accounts created by the existing provisioning function reserve their handles automatically via a database trigger.
+The migration is rerunnable. If you rerun older migrations, run setup-editable-subdomains.sql LAST so the newest reservation and hostname functions are retained. You do not need to rerun older migrations for this installation.
 
 VALIDATION
-37 automated tests passed; production build passed. PostgreSQL-compatible checks verified immediate public starters, editor lockout before onboarding, duplicate-handle rollback, hostname reservation ownership, preserved disabled/custom-domain state, unknown-host rejection, onboarding completion and later account suspension. Browser checks with local sample data verified URL preview, separate public/private links and the live-site/pending-account status. Temporary QA adapters were restored before packaging. Live Supabase and Vercel application code have not been modified by this download.
+40 automated tests passed and production build passed. Isolated PostgreSQL-compatible checks verified owner rename, unchanged content/site ID, preserved aliases, cross-agent denial, anonymous denial, service-only administrative operation, pending account restrictions, invalid/reserved names, custom domain and disabled-state preservation, protection against future accounts reclaiming aliases, fresh website provisioning, and migration reruns.
+Local browser checks verified the new name editor, updated dashboard links, preserved unsaved content, success feedback and duplicate-name feedback. Temporary QA adapters were restored before packaging. Your live Supabase database and Vercel deployment have not been changed by this download.

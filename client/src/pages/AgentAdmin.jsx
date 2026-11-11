@@ -1,3 +1,4 @@
+import SubdomainEditor from '../components/SubdomainEditor.jsx';
 import { useEffect, useState } from 'react';
 import { agentWebsiteHref } from '../services/siteRouting.js';
 import { authRequest } from '../services/auth.js';
@@ -57,6 +58,7 @@ export default function AgentAdmin() {
           {error && <p role="alert" className="admin-error">{error}</p>}
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">{agentWebsiteHref(agent)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           {!agent.websiteEnabled && <p className="admin-error" role="status">Your public website is disabled by the platform administrator. You can still edit and save your content here.</p>}
+          <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={setAgent} />
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
         </section>
       </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>

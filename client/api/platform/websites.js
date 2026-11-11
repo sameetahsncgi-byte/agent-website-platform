@@ -9,11 +9,11 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
       if (!['GET', 'POST'].includes(req.method)) { res.setHeader('Allow', 'GET, POST'); throw httpError(405, 'Method not allowed.'); }
       const platformHostname = new URL(appOrigin(env)).hostname;
       const client = getClient(env);
-      await verifiedAdmin(req, client);
+      const admin = await verifiedAdmin(req, client);
       if (req.method === 'GET') {
         const { data: profiles, error } = await client.from('agent_profiles').select('site_id, name, active, created_at').eq('role', 'agent').order('created_at', { ascending: false }).limit(500);
         if (error) throw httpError(503, 'Unable to load agent websites.');
-        const { data: settings, error: settingsError } = await client.from('agent_website_settings').select('site_id, enabled, hostname, publish_before_onboarding');
+        const { data: settings, error: settingsError } = await client.from('agent_website_settings').select('site_id, enabled, hostname, publish_before_onboarding, subdomain_slug');
         if (settingsError) throw httpError(503, 'Run setup-automatic-subdomains.sql after setup-website-controls.sql in Supabase first.');
         const { data: onboarding, error: onboardingError } = await client.from('agent_onboarding').select('site_id, status, site_slug');
         if (onboardingError) throw httpError(503, 'Unable to load onboarding status.');
@@ -23,7 +23,8 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
           const settings = lookup.get(profile.site_id);
           const account = accounts.get(profile.site_id);
           return { ...profile, enabled: settings?.enabled ?? true, hostname: settings?.hostname || null,
-            defaultHostname: account ? defaultAgentHostname(account.site_slug) : null,
+            subdomainSlug: settings?.subdomain_slug || account?.site_slug || '',
+            defaultHostname: settings?.subdomain_slug || account?.site_slug ? defaultAgentHostname(settings?.subdomain_slug || account.site_slug) : null,
             publicEligible: profile.active || (settings?.publish_before_onboarding === true && account?.status === 'invited') };
         }) });
       }
@@ -36,6 +37,15 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
         let hostname;
         try { hostname = normalizeHostname(body.hostname); } catch (error) { throw httpError(400, error.message); }
         if (hostname === platformHostname || hostname === 'vercel.app' || hostname.endsWith('.localhost')) throw httpError(400, 'Use an agent hostname, not the main platform address.');
+        if (hostname.endsWith('.brokerage.sncgi.com')) {
+          const slug = hostname.slice(0, -'.brokerage.sncgi.com'.length);
+          const { data, error } = await client.rpc('rename_agent_subdomain', { p_site_id: body.siteId, p_slug: slug, p_actor: admin.id });
+          if (error?.code === '23505') throw httpError(409, 'That website name is already used or reserved.');
+          if (error?.code === '22023') throw httpError(400, 'Choose a valid website name of 3–40 lowercase letters, numbers or single hyphens.');
+          if (error?.code === '42501') throw httpError(403, 'Administrator access is required.');
+          if (error || !data) throw httpError(503, 'Unable to rename the subdomain. Run setup-editable-subdomains.sql first.');
+          return res.status(200).json({ website: { ...data, subdomainSlug: data.subdomain_slug, defaultHostname: defaultAgentHostname(data.subdomain_slug) } });
+        }
         change = { hostname };
       } else if (body.action === 'remove-hostname') change = { hostname: null };
       else throw httpError(400, 'Choose a supported website action.');

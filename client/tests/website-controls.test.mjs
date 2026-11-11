@@ -5,10 +5,14 @@ import { makePublicWebsiteLoader } from '../src/services/publicWebsite.js';
 import { agentWebsiteHref } from '../src/services/siteRouting.js';
 import { normalizeHostname } from '../src/services/hostnames.js';
 function fixture(options = {}) {
-  const writes = [];
+  const writes = []; const rpcCalls = [];
   const settings = { publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
   const profiles = [{ site_id: settings.site_id, name: 'Yasir Fareed', active: !options.pending, role: 'agent' }, { site_id: 'site-original', name: 'Original Agent', active: true, role: 'agent' }];
   const client = {
+    rpc:async(name,args)=>{
+      rpcCalls.push([name,args]);
+      return options.duplicate?{error:{code:'23505'}}:{data:{site_id:args.p_site_id,enabled:settings.enabled,subdomain_slug:args.p_slug,hostname:args.p_slug+'.brokerage.sncgi.com'}};
+    },
     auth: { getUser: async () => options.invalid ? { error: {} } : { data: { user: { id: 'admin' } } } },
     from(table) {
       const filters = []; let update;
@@ -25,7 +29,7 @@ function fixture(options = {}) {
     },
   };
   const handler = makeWebsitesHandler({ getClient: () => client, env: { APP_URL: 'https://agent-website-platform.vercel.app' } });
-  return { writes, settings, async run(body, extra = {}) {
+  return { writes, rpcCalls, settings, async run(body, extra = {}) {
     const req = { method: 'POST', headers: { authorization: 'Bearer verified', origin: 'https://agent-website-platform.vercel.app', 'content-type': 'application/json' }, body, ...extra };
     const res = { setHeader() {}, status(n) { this.code = n; return this; }, json(body) { this.body = body; return this; } };
     await handler(req, res); return res;
@@ -100,4 +104,14 @@ test('website management distinguishes a publicly live starter from pending edit
   assert.equal(res.body.websites[0].active,false);
   assert.equal(res.body.websites[0].publicEligible,true);
   assert.equal(res.body.websites[0].defaultHostname,'yasir-fareed.brokerage.sncgi.com');
+});
+
+test('Super Admin hostname changes use the atomic rename operation and verified actor',async()=>{
+  const f=fixture();
+  const result=await f.run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:'RIZZ-SABBIR.brokerage.sncgi.com',p_actor:'forged'});
+  assert.equal(result.code,200);
+  assert.deepEqual(f.rpcCalls,[['rename_agent_subdomain',{p_site_id:'site-yasir-fareed',p_slug:'rizz-sabbir',p_actor:'admin'}]]);
+  assert.equal(f.writes.length,0);
+  assert.equal(result.body.website.defaultHostname,'rizz-sabbir.brokerage.sncgi.com');
+  assert.equal((await fixture({duplicate:true}).run({action:'set-hostname',siteId:'site-yasir-fareed',hostname:'taken.brokerage.sncgi.com'})).code,409);
 });

@@ -21,7 +21,7 @@ function WebsiteRow({ website, busy, save }) {
       {website.hostname && <button className="admin-secondary" disabled={busy} type="button" onClick={() => {
         if (window.confirm('Remove this hostname mapping? The automatic brokerage address and original platform link will still work if the website is enabled.')) save({ action: 'remove-hostname', siteId: website.site_id });
       }}>Remove mapping</button>}</div>
-      <p className="platform-help">Automatic brokerage.sncgi.com addresses use the shared wildcard; no separate Vercel entry is needed. For a custom domain, connect it in Vercel and configure DNS before saving it here.</p>
+      <p className="platform-help">Saving a new brokerage.sncgi.com hostname renames this agent’s automatic address. Previous brokerage links keep working. No separate Vercel entry is needed. For a custom domain, connect it in Vercel and configure DNS before saving it here.</p>
     </form>
   </article>;
 }
