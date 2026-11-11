@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isSuperAdminLocation, SUPER_ADMIN_URL } from '../services/adminLocation.js';
 import { getAdminSupabase } from '../services/adminSupabase.js';
 import { platformAuth } from '../services/platformAuth.js';
 import '../styles/AgentAdmin.css';
@@ -7,6 +8,23 @@ import AgentManager from '../components/AgentManager.jsx';
 import '../styles/PlatformAdmin.css';
 
 export default function SuperAdmin() {
+  if (!isSuperAdminLocation()) {
+    return <div className="agent-admin">
+      <header className="admin-topbar"><span className="admin-wordmark"><span>SA</span> Platform administration</span></header>
+      <main className="admin-overview platform-workspace">
+        <section className="admin-account" aria-label="Super Admin location">
+          <h1>Open the platform website</h1>
+          <p>Super Admin is available only on the platform website.</p>
+          <a className="admin-secondary" href={SUPER_ADMIN_URL}>Open Super Admin ↗</a>
+        </section>
+      </main>
+    </div>;
+  }
+  // Mount authentication and management components only at the allowed origin.
+  return <PlatformSuperAdmin />;
+}
+
+function PlatformSuperAdmin() {
   const [admin, setAdmin] = useState(null);
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
