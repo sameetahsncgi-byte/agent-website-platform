@@ -1,3 +1,4 @@
+import SeoEditor from '../components/SeoEditor.jsx';
 import { watchWebsiteSettings } from '../services/websiteSync.js';
 import SubdomainEditor from '../components/SubdomainEditor.jsx';
 import { useEffect, useRef, useState } from 'react';
@@ -10,6 +11,7 @@ import AgentContentEditor from '../components/AgentContentEditor.jsx';
 export default function AgentAdmin() {
   const syncVersion=useRef(0);
   const [agent, setAgent] = useState(null);
+  const [seoDirty,setSeoDirty]=useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
@@ -62,7 +64,7 @@ export default function AgentAdmin() {
     finally { setBusy(false); }
   }
   async function logout() {
-    if (editorDirty && !window.confirm('Log out and discard your unsaved changes?')) return;
+    if ((editorDirty || seoDirty) && !window.confirm('Log out and discard your unsaved changes?')) return;
     setEditorDirty(false);
     setBusy(true); setError('');
     try { await authRequest('/api/auth/logout', {}); setAgent(null); setPassword(''); }
@@ -87,6 +89,7 @@ export default function AgentAdmin() {
           {syncError && <p className="admin-error" role="alert">{syncError}</p>}
           <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={domainChanged} />
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
+          <SeoEditor key={`seo-${agent.siteId}`} agent={agent} onDirtyChange={setSeoDirty}/>
         </section>
       </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>
       <section className="admin-login-card"><span className="admin-label">AGENT ACCESS</span><h2>Welcome back.</h2><p>Enter the email and password created in Supabase Authentication.</p>

@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/site.js": {
+      "includeFiles": "{.server/**,dist/index.html}",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/api/site?path="
+    },
+    {
+      "src": "^/index\\.html$",
+      "dest": "/api/site?path="
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/api/site?path=$1"
+    }
+  ]
+}

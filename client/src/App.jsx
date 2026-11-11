@@ -1,3 +1,4 @@
+import SiteLink from './components/SiteLink.jsx';
 import { useAgent } from './context/AgentContext.js';
 import { useState } from 'react';
 import Header from './components/Header.jsx';
@@ -18,8 +19,8 @@ import { themeVariables } from './data/themes.js';
 import './styles/Themes.css';
 
 // App owns the shared layout and passes listing actions to separate pages.
-export default function App() {
-  const { page, key: routeKey } = usePage();
+export default function App({initialPage}) {
+  const { page, key: routeKey } = usePage(initialPage);
   const agent = useAgent();
   const [saved, setSaved] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -48,7 +49,7 @@ export default function App() {
     <h1>{agent.contentStatus === 'loading' ? 'Loading website…' : agent.contentStatus === 'missing' ? 'Website unavailable' : 'Unable to load this website'}</h1>
     <p role="status">{agent.contentStatus === 'loading' ? 'Getting this agent’s website details.' : agent.contentStatus === 'missing' ? 'Check the website address or contact the agent. This website may not be active yet.' : 'Check the website address and your connection, then try again.'}</p>
     {agent.contentStatus === 'error' && <button className="button" onClick={() => window.location.reload()}>Try again</button>}
-    <p><a href="#/admin">Agent sign in</a></p>
+    <p><SiteLink href="#/admin">Agent sign in</SiteLink></p>
   </main>;
 
   return (
@@ -56,7 +57,7 @@ export default function App() {
       <div className="demo-bar">Demo website · Sample listings · No live MLS feed</div>
       <Header page={page} />
       <main id="main-content" key={`page-${routeKey}`}>
-        {pages[page] || <><PageIntro eyebrow="PAGE NOT FOUND" title="Let’s get you back home." description="This demo page does not exist." /><div className="container not-found"><a className="button" href="#/home">Return home ↗</a></div></>}
+        {pages[page] || <><PageIntro eyebrow="PAGE NOT FOUND" title="Let’s get you back home." description="This demo page does not exist." /><div className="container not-found"><SiteLink className="button" href="#/home">Return home ↗</SiteLink></div></>}
       </main>
       <Footer />
       <PropertyDetails key={`dialog-${routeKey}`} property={selected?.routeKey === routeKey ? selected.property : null} onClose={() => setSelected(null)} />

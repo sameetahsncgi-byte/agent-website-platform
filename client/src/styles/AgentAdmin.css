@@ -77,3 +77,8 @@
 .agent-admin .editor-actions a { font-size: 12px; text-decoration: underline; margin-left: auto; }
 @media(max-width: 700px) { .agent-admin .editor-fields { grid-template-columns: 1fr; } .agent-admin .editor-heading { flex-direction: column; } .agent-admin .editor-actions a { margin-left: 0; } }
 @media(max-width: 400px) { .agent-admin .editor-image-field { flex-direction: column; align-items: start; } }
+
+.agent-admin select,.agent-admin .content-editor textarea {width:100%;padding:12px;border:1px solid #ccd7cd;border-radius:5px;font:inherit;background:#fff;color:#20382f;}
+.agent-admin .seo-checkbox {display:flex;align-items:center;gap:10px;}.agent-admin .seo-checkbox input{width:auto;}
+.agent-admin .seo-preview {border:1px solid #dfe5dd;padding:18px;margin-block:22px;border-radius:6px;overflow-wrap:anywhere;}.agent-admin .seo-preview h3{color:#1949a5;font:20px Arial,sans-serif;margin:8px 0;}.agent-admin .seo-preview p{margin:0;}
+.agent-admin .editor-image-preview.hero,.agent-admin .editor-image-preview.social{width:240px;aspect-ratio:16/9;height:auto;}.agent-admin .editor-image-preview.hero img,.agent-admin .editor-image-preview.social img{width:100%;height:100%;object-fit:cover;}

@@ -100,7 +100,7 @@ test('disabled query links, unknown hostnames and lookup failures never load ano
 });
 test('dashboard links use assigned hostnames or the platform origin, never a different agent hostname', () => {
   const location = { hostname: 'other-agent.example.com', origin: 'https://other-agent.example.com' };
-  assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed', subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' }, 'contact', location), 'https://yasir-agent-website-platform.vercel.app/#/contact');
+  assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed', subdomain_slug: 'yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' }, 'contact', location), 'https://yasir-agent-website-platform.vercel.app/contact');
   assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed' }, 'home', location), 'https://agent-website-platform.vercel.app/?site=site-yasir-fareed#/home');
 });
 

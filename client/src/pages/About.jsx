@@ -1,3 +1,4 @@
+import SiteLink from '../components/SiteLink.jsx';
 import AgentProfile from '../components/AgentProfile.jsx';
 import PageIntro from '../components/PageIntro.jsx';
 import ContactCallout from '../components/ContactCallout.jsx';
@@ -13,7 +14,7 @@ export default function About() {
         <p>{agent.aboutIntro}</p>
         <p>{agent.bio}</p>
         <p className="agent-story">{agent.aboutStory}</p>
-        <a className="button" href="#/contact">Let’s connect ↗</a>
+        <SiteLink className="button" href="#/contact">Let’s connect ↗</SiteLink>
       </div></div>
       <div className="values-grid">
         <article><span className="eyebrow">01 · COMMUNICATION</span><h3>Clarity at every step</h3><p>Straightforward answers and regular updates so you can make informed decisions.</p></article>

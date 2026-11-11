@@ -6,6 +6,7 @@ import { THEMES } from '../data/themes.js';
 export const SITE_ID = import.meta.env?.VITE_AGENT_SITE_ID || 'site-agent001';
 export const BUCKET = 'agent-images';
 export const fields = {
+  heroAlt: ['Homepage background description',220], photoAlt: ['Agent photo description',220], logoAlt: ['Logo description',220],
   name: ['Full name', 100], professionalTitle: ['Professional title', 120],
   brokerage: ['Company / brokerage', 160], headline: ['Homepage headline', 180],
   bio: ['Short biography', 2000], aboutTitle: ['About section heading', 180],
@@ -16,6 +17,7 @@ export const fields = {
   instagram: ['Instagram URL', 500], linkedin: ['LinkedIn URL', 500],
 };
 export const defaultContent = {
+  heroOverlay:55, heroPath:'',
   themeKey: 'forest',
   ...defaults, professionalTitle: 'Real Estate Agent',
   aboutTitle: 'Your goals come first. Every step of the way.',
@@ -24,10 +26,10 @@ export const defaultContent = {
   address: '', website: '', facebook: '', instagram: '', linkedin: '', photoPath: '', logoPath: '',
 };
 const column = key => key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-const keys = [...Object.keys(fields), 'photoPath', 'logoPath', 'themeKey'];
+const keys = [...Object.keys(fields), 'photoPath', 'logoPath', 'heroPath', 'heroOverlay', 'themeKey'];
 const selection = ['site_id', 'updated_at', ...keys.map(column)].join(',');
 export function fromRow(row) {
-  return row ? { ...defaultContent, ...Object.fromEntries(keys.map(key => [key, row[column(key)] ?? (key === 'themeKey' ? 'forest' : '')])) } : { ...defaultContent };
+  return row ? { ...defaultContent, ...Object.fromEntries(keys.map(key => [key, row[column(key)] ?? (key === 'themeKey' ? 'forest' : key==='heroOverlay'?55:'')])) } : { ...defaultContent };
 }
 export function validateContent(value) {
   const result = {};
@@ -48,10 +50,14 @@ export function validateContent(value) {
   const themeKey = value.themeKey || 'forest';
   if (!THEMES.some(theme => theme.id === themeKey)) throw Error('Choose one of the available website themes.');
   result.themeKey = themeKey;
+  const overlay=value.heroOverlay ?? 55;
+  if(!Number.isInteger(Number(overlay)) || Number(overlay)<0 || Number(overlay)>100)throw Error('Choose an overlay strength from 0 to 100.');
+  result.heroOverlay=Number(overlay);
   return result;
 }
 export function imageUrl(path) {
-  return path ? getSupabase().storage.from(BUCKET).getPublicUrl(path).data.publicUrl : '';
+  const url=import.meta.env?.VITE_SUPABASE_URL;
+  return path ? url ? `${url}/storage/v1/object/public/${BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}` : getSupabase().storage.from(BUCKET).getPublicUrl(path).data.publicUrl : '';
 }
 export async function loadContent(siteId = selectedSiteId(globalThis.location?.search || '', SITE_ID)) {
   const { data, error } = await getSupabase().from('agent_site_content').select(selection).eq('site_id', siteId).maybeSingle();
@@ -82,7 +88,7 @@ export async function saveContent(siteId, value, files = {}, previous = {}) {
   const obsolete = [];
   const paths = {};
   try {
-    for (const kind of ['photo', 'logo']) {
+    for (const kind of ['photo', 'logo', 'hero']) {
       const key = `${kind}Path`;
       paths[key] = value[key] || '';
       if (files[kind]) {

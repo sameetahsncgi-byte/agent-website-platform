@@ -25,7 +25,7 @@ export function agentWebsiteHref(agent, page = 'home', location = window.locatio
   if (agent.hostname) {
     // hostname comes from the read-only, administrator-managed settings table.
     if (!/^[a-z]+(?:-[a-z]+)*$/.test(page)) throw Error('Invalid page.');
-    return `https://${agent.hostname}/#/${page}`;
+    return `https://${agent.hostname}${page==='home'?'/':'/'+page}`;
   }
   const origin = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) ? location.origin : `https://${PLATFORM_HOSTNAME}`;
   return `${origin}${websiteHref(agent.siteId, page, '/')}`;
