@@ -6,15 +6,15 @@ import { agentWebsiteHref } from '../src/services/siteRouting.js';
 import { normalizeHostname } from '../src/services/hostnames.js';
 function fixture(options = {}) {
   const writes = [];
-  const settings = { site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
-  const profiles = [{ site_id: settings.site_id, name: 'Yasir Fareed', active: true, role: 'agent' }, { site_id: 'site-original', name: 'Original Agent', active: true, role: 'agent' }];
+  const settings = { publish_before_onboarding: true, site_id: 'site-yasir-fareed', enabled: true, hostname: 'yasir-agent-website-platform.vercel.app' };
+  const profiles = [{ site_id: settings.site_id, name: 'Yasir Fareed', active: !options.pending, role: 'agent' }, { site_id: 'site-original', name: 'Original Agent', active: true, role: 'agent' }];
   const client = {
     auth: { getUser: async () => options.invalid ? { error: {} } : { data: { user: { id: 'admin' } } } },
     from(table) {
       const filters = []; let update;
       const result = single => {
         if (update) { writes.push(update); if (options.duplicate) return { error: { code: '23505' } }; Object.assign(settings, update); }
-        let data = table === 'platform_admins' ? [{ user_id: 'admin', active: !options.notAdmin }] : table === 'agent_profiles' ? profiles : [settings];
+        let data = table === 'platform_admins' ? [{ user_id: 'admin', active: !options.notAdmin }] : table === 'agent_profiles' ? profiles : table === 'agent_onboarding' ? [{site_id: settings.site_id, site_slug:'yasir-fareed', status: options.pending ? 'invited' : 'active'}] : [settings];
         for (const [key, value] of filters) data = data.filter(row => row[key] === value);
         return { data: single ? data[0] || null : data };
       };
@@ -92,4 +92,12 @@ test('dashboard links use assigned hostnames or the platform origin, never a dif
   const location = { hostname: 'other-agent.example.com', origin: 'https://other-agent.example.com' };
   assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed', hostname: 'yasir-agent-website-platform.vercel.app' }, 'contact', location), 'https://yasir-agent-website-platform.vercel.app/#/contact');
   assert.equal(agentWebsiteHref({ siteId: 'site-yasir-fareed' }, 'home', location), 'https://agent-website-platform.vercel.app/?site=site-yasir-fareed#/home');
+});
+
+test('website management distinguishes a publicly live starter from pending editor access', async () => {
+  const res = await fixture({pending:true}).run(undefined, {method:'GET'});
+  assert.equal(res.code,200);
+  assert.equal(res.body.websites[0].active,false);
+  assert.equal(res.body.websites[0].publicEligible,true);
+  assert.equal(res.body.websites[0].defaultHostname,'yasir-fareed.brokerage.sncgi.com');
 });

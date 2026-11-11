@@ -74,7 +74,7 @@ export function validateAgent(body) {
   const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
   if (!name || name.length > 100) throw httpError(400, 'Enter an agent name of 100 characters or fewer.');
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Enter a valid agent email.');
-  if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug) || reserved.has(slug)) throw httpError(400, 'Use a unique website handle of 3–40 lowercase letters, numbers or hyphens. Avoid reserved names.');
+  if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug) || slug.includes('--') || reserved.has(slug)) throw httpError(400, 'Use a unique website handle of 3–40 lowercase letters, numbers or hyphens. Avoid reserved names.');
   if (!isUuid(body.requestId)) throw httpError(400, 'Refresh the form and try again.');
   return { name, email, slug, requestId: body.requestId };
 }

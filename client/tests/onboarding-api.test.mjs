@@ -45,6 +45,7 @@ function fixture(options={}){
 }
 test('verified administrator can provision and get a private link without sending email',async()=>{
  const f=fixture();const res=await f.run(f.agents,f.req({...input,p_admin_id:'attacker',userId:'attacker'}));
+ assert.equal(res.body.websiteUrl,'https://jordan.brokerage.sncgi.com/');
  assert.equal(res.code,201);assert.match(res.body.onboardingUrl,/^https:\/\/platform.example.com\/#\/onboarding\?token_hash=/);
  assert.equal(res.headers['Cache-Control'],'no-store, private');
  assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_admin_id,owner);

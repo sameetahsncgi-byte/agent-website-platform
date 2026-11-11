@@ -1,3 +1,4 @@
+import { defaultAgentHostname } from '../../src/services/agentSubdomains.js';
 import { appOrigin, createServerClient, httpError, readBody, responseHeaders, sameOrigin, sendError, verifiedAdmin } from '../../server/platform.js';
 import { normalizeHostname } from '../../src/services/hostnames.js';
 const validSite = value => typeof value === 'string' && value.length <= 120 && /^site-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
@@ -12,10 +13,19 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
       if (req.method === 'GET') {
         const { data: profiles, error } = await client.from('agent_profiles').select('site_id, name, active, created_at').eq('role', 'agent').order('created_at', { ascending: false }).limit(500);
         if (error) throw httpError(503, 'Unable to load agent websites.');
-        const { data: settings, error: settingsError } = await client.from('agent_website_settings').select('site_id, enabled, hostname');
-        if (settingsError) throw httpError(503, 'Run setup-website-controls.sql in Supabase first.');
+        const { data: settings, error: settingsError } = await client.from('agent_website_settings').select('site_id, enabled, hostname, publish_before_onboarding');
+        if (settingsError) throw httpError(503, 'Run setup-automatic-subdomains.sql after setup-website-controls.sql in Supabase first.');
+        const { data: onboarding, error: onboardingError } = await client.from('agent_onboarding').select('site_id, status, site_slug');
+        if (onboardingError) throw httpError(503, 'Unable to load onboarding status.');
+        const accounts = new Map((onboarding || []).map(row => [row.site_id, row]));
         const lookup = new Map((settings || []).map(row => [row.site_id, row]));
-        return res.status(200).json({ websites: (profiles || []).map(profile => ({ ...profile, enabled: lookup.get(profile.site_id)?.enabled ?? true, hostname: lookup.get(profile.site_id)?.hostname || null })) });
+        return res.status(200).json({ websites: (profiles || []).map(profile => {
+          const settings = lookup.get(profile.site_id);
+          const account = accounts.get(profile.site_id);
+          return { ...profile, enabled: settings?.enabled ?? true, hostname: settings?.hostname || null,
+            defaultHostname: account ? defaultAgentHostname(account.site_slug) : null,
+            publicEligible: profile.active || (settings?.publish_before_onboarding === true && account?.status === 'invited') };
+        }) });
       }
       sameOrigin(req, env);
       const body = await readBody(req);
@@ -34,8 +44,9 @@ export function makeWebsitesHandler({ getClient = createServerClient, env = proc
       if (!profile || profile.role !== 'agent') throw httpError(404, 'Agent website not found.');
       // Ensure a settings row exists without overwriting any existing field.
       const { error: ensureError } = await client.from('agent_website_settings').upsert({ site_id: body.siteId }, { onConflict: 'site_id', ignoreDuplicates: true });
-      if (ensureError) throw httpError(503, 'Run setup-website-controls.sql in Supabase first.');
+      if (ensureError) throw httpError(503, 'Run setup-automatic-subdomains.sql after setup-website-controls.sql in Supabase first.');
       const { data, error } = await client.from('agent_website_settings').update({ ...change, updated_at: new Date().toISOString() }).eq('site_id', body.siteId).select('site_id, enabled, hostname').maybeSingle();
+      if (error?.code === '23514') throw httpError(409, 'A brokerage subdomain can only be assigned to the agent who reserved its handle.');
       if (error?.code === '23505') throw httpError(409, 'That hostname is already assigned to another agent.');
       if (error || !data) throw httpError(503, 'Unable to save the website settings.');
       return res.status(200).json({ website: data });
