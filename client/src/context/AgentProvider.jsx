@@ -32,8 +32,9 @@ export default function AgentProvider({ children }) {
     reload();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') reload(); }, 30000);
     window.addEventListener('agent-content-saved', reload);
+    window.addEventListener('agent-seo-saved',reload);
     window.addEventListener('focus', reload);
-    return () => { active = false; window.clearInterval(timer); window.removeEventListener('agent-content-saved', reload); window.removeEventListener('focus', reload); };
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('agent-content-saved', reload);window.removeEventListener('agent-seo-saved',reload); window.removeEventListener('focus', reload); };
   }, []);
   const name = content.name || defaultContent.name;
   const initials = name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
