@@ -1,3 +1,4 @@
+import defaultHero from '../assets/real-estate-hero.webp';
 import { agentWebsiteHref } from '../services/siteRouting.js';
 import { useEffect, useRef, useState } from 'react';
 import ThemePicker from './ThemePicker.jsx';
@@ -10,7 +11,7 @@ const sections = {
 };
 const multiline = ['bio', 'aboutIntro', 'aboutStory', 'address'];
 
-export function ImageField({ kind, value, file, onChange, onRemove, disabled, onError, onProcessing }) {
+export function ImageField({ kind, value, file, onChange, onRemove, disabled, onError, onProcessing, overlay=55 }) {
   const [preview, setPreview] = useState('');
   const [processing, setProcessing] = useState(false);
   const input = useRef(null);
@@ -20,7 +21,8 @@ export function ImageField({ kind, value, file, onChange, onRemove, disabled, on
     setPreview(url);
     return () => { URL.revokeObjectURL(url); setPreview(''); };
   }, [file]);
-  const src = file ? preview : imageUrl(value);
+  const uploadedSrc = file ? preview : imageUrl(value);
+  const src=uploadedSrc || (kind==='hero'?defaultHero:'');
   async function choose(event) {
     const selected = event.target.files?.[0];
     if (!selected) return;
@@ -30,12 +32,13 @@ export function ImageField({ kind, value, file, onChange, onRemove, disabled, on
     finally { setProcessing(false); onProcessing(false); if (input.current) input.current.value = ''; }
   }
   return <div className="editor-image-field">
-    <div className={`editor-image-preview ${kind}`}>
+    <div className={`editor-image-preview editor-image-preview--${kind}`}>
       {src ? <img src={src} alt={`${kind} image preview`} /> : <span>{kind === 'photo' ? 'Your photo' : kind==='hero'?'Default homepage image':kind==='social'?'Social image':'Company logo'}</span>}
+      {kind==='hero' && <span className="editor-hero-overlay" aria-hidden="true" style={{opacity:overlay/100}}/>}
     </div>
-    <div><h3>{kind === 'photo' ? 'Agent photo' : kind==='hero'?'Homepage background':kind==='social'?'Social-sharing image':'Company logo'}</h3><p>JPG, PNG, or WebP · up to 5 MB. Images are optimized before uploading.</p>
+    <div className="editor-image-details"><h3>{kind === 'photo' ? 'Agent photo' : kind==='hero'?'Homepage background':kind==='social'?'Social-sharing image':'Company logo'}</h3><p>JPG, PNG, or WebP · up to 5 MB. Images are optimized before uploading.</p>
       <label className="admin-secondary upload-label">{processing ? 'Optimizing…' : 'Choose image'}<input ref={input} type="file" accept="image/jpeg,image/png,image/webp" onChange={choose} disabled={disabled || processing} /></label>
-      {(src || file) && <button type="button" className="editor-remove" onClick={onRemove} disabled={disabled || processing}>Remove</button>}
+      {(value || file) && <button type="button" className="editor-remove" onClick={onRemove} disabled={disabled || processing}>Remove</button>}
       <small>Image changes publish when you save.</small>
     </div>
   </div>;
@@ -100,7 +103,7 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
       <fieldset disabled={saving}>
         <ThemePicker value={form.themeKey || 'forest'} onChange={themeKey => update('themeKey', themeKey)} />
         <div id="editor-panel" role="tabpanel" aria-labelledby={`tab-${section}`}>
-          <ImageField kind={section === 'about' ? 'photo' : section==='home'?'hero':'logo'} value={form[section === 'about' ? 'photoPath' : section==='home'?'heroPath':'logoPath']} file={files[section === 'about' ? 'photo' : section==='home'?'hero':'logo']} disabled={saving}
+          <ImageField overlay={form.heroOverlay ?? 55} kind={section === 'about' ? 'photo' : section==='home'?'hero':'logo'} value={form[section === 'about' ? 'photoPath' : section==='home'?'heroPath':'logoPath']} file={files[section === 'about' ? 'photo' : section==='home'?'hero':'logo']} disabled={saving}
             onChange={file => { const kind = section === 'about' ? 'photo' : section==='home'?'hero':'logo'; setFiles(current => ({ ...current, [kind]: file })); setMessage(''); setError(''); }}
             onRemove={() => { const kind = section === 'about' ? 'photo' : section==='home'?'hero':'logo'; setFiles(current => ({ ...current, [kind]: null })); update(`${kind}Path`, ''); }} onError={setError} onProcessing={setProcessingImage} />
           {section==='home' && <label htmlFor="hero-overlay">Background overlay strength: {form.heroOverlay ?? 55}%<input id="hero-overlay" type="range" min="0" max="100" step="5" value={form.heroOverlay ?? 55} onChange={event=>update('heroOverlay',Number(event.target.value))}/><small>Lower values make the image clearer. Higher values darken it for readable text. The default effect has been reduced.</small></label>}

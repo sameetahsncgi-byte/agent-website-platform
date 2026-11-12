@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {getSupabase} from '../services/supabase.js';
 import {defaultContent,loadContent} from '../services/siteContent.js';
 import {PLATFORM_HOSTNAME} from '../services/siteRouting.js';
-import {PUBLIC_PAGES,seoPages,validateSeo,pageMetadata,pagePath} from '../services/seo.js';
+import {PUBLIC_PAGES,seoPages,validateSeo,pageMetadata,pagePath,defaultSeo,SEO_TEXT_FIELDS,seoVariables,renderSeoTemplate,withSeoDefaults} from '../services/seo.js';
 import {ImageField} from './AgentContentEditor.jsx';
 export default function SeoEditor({agent,onDirtyChange}){
  const [publicContent,setPublicContent]=useState({...defaultContent,name:agent.name});
@@ -16,7 +16,11 @@ export default function SeoEditor({agent,onDirtyChange}){
    if(!active)return;if(error){setError('Unable to load SEO settings. Run setup-seo-homepage.sql first.');return;}
    setPublicContent(record.exists?record.content:{...record.content,name:agent.name});
    const loaded=seoPages(data);setPages(loaded);setForm(loaded[0]);setBaseline(loaded[0]);setKey('home');setFile(null);
-  }).catch(error=>{if(active)setError(error.message);});return()=>{active=false;};
+  }).catch(error=>{if(active)setError(error.message);});
+  function refreshPublishedDetails(){loadContent(agent.siteId).then(record=>{if(active && record.exists)setPublicContent(record.content);}).catch(()=>{});}
+  window.addEventListener('agent-content-saved',refreshPublishedDetails);
+  window.addEventListener('focus',refreshPublishedDetails);
+  return()=>{active=false;window.removeEventListener('agent-content-saved',refreshPublishedDetails);window.removeEventListener('focus',refreshPublishedDetails);};
  },[agent.siteId,retry]);
  useEffect(()=>{const protect=event=>{if(dirty){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',protect);return()=>window.removeEventListener('beforeunload',protect);},[dirty]);
  function update(field,value){setForm(old=>({...old,[field]:value}));setMessage('');}
@@ -28,20 +32,23 @@ export default function SeoEditor({agent,onDirtyChange}){
    if(file){const {data,error}=await client.auth.getUser();if(error || !data.user)throw Error('Sign in again to save.');uploaded=`${data.user.id}/social-${crypto.randomUUID()}.webp`;const result=await client.storage.from('agent-images').upload(uploaded,file,{contentType:'image/webp',upsert:false});if(result.error)throw Error('Unable to upload the social image.');value.social_path=uploaded;}
    const {data,error}=await client.rpc('save_my_page_seo',{p_page_key:key,p_values:value});
    if(error)throw Error(error.code==='23505'?'That page slug is already used or reserved by another page.':error.code==='42501'?'Sign in with the active website owner account.':'SEO was not saved. Check the fields and database setup.');
-   setPages(old=>old.map(row=>row.page_key===key?data:row));setForm(data);setBaseline(data);setFile(null);setMessage('SEO published. Changed page URLs redirect to the current slug.');window.dispatchEvent(new Event('agent-content-saved'));
+   setPages(old=>old.map(row=>row.page_key===key?withSeoDefaults(data):row));setForm(withSeoDefaults(data));setBaseline(withSeoDefaults(data));setFile(null);setMessage('SEO published. Changed page URLs redirect to the current slug.');window.dispatchEvent(new Event('agent-content-saved'));
   }catch(error){if(uploaded)await getSupabase().storage.from('agent-images').remove([uploaded]).catch(()=>{});setError(error.message);}
   finally{setBusy(false);}
  }
  if(!pages || !form)return <section className="admin-account"><h2>Page SEO</h2>{error?<><p className="admin-error" role="alert">{error}</p><button className="admin-secondary" onClick={()=>setRetry(n=>n+1)}>Retry</button></>:<p>Loading SEO settings…</p>}</section>;
  const preview=pageMetadata(publicContent,form);
- return <section className="content-editor" aria-label="SEO editor"><span className="admin-label">SEARCH AND SHARING</span><h2>Page SEO</h2><p>Each page has its own settings for this website. Metadata does not guarantee rankings or the exact Google snippet.</p>
+ const variables=seoVariables(publicContent),focus=renderSeoTemplate(form.focus_keyword,publicContent);
+ function restoreDefaults(){const defaults=defaultSeo(key);setForm(current=>({...current,...Object.fromEntries(SEO_TEXT_FIELDS.map(field=>[field,defaults[field]]))}));setMessage('Default SEO text restored in the editor. Save & Publish SEO to apply it.');}
+ return <section className="content-editor" aria-label="SEO editor"><div className="seo-editor-heading"><div><span className="admin-label">SEARCH AND SHARING</span><h2>Page SEO</h2></div><button type="button" className="admin-secondary" disabled={busy || processing} onClick={restoreDefaults}>Restore default SEO text</button></div><p>Each page has its own settings for this website. Metadata does not guarantee rankings or the exact Google snippet.</p>
   <label htmlFor="seo-page">Select a page</label><select id="seo-page" value={key} disabled={busy || processing} onChange={event=>choose(event.target.value)}>{PUBLIC_PAGES.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
+  <details className="seo-variable-guide"><summary>Dynamic SEO variables</summary><p>These variables use your published website details and stay up to date when those details change. You can keep them, combine them with your own text, or replace them.</p><div className="seo-variable-list">{Object.entries(variables).map(([name,value])=><div key={name}><code>{`{{${name}}}`}</code><span>{value}</span></div>)}</div><p className="platform-help">Social fields also accept <code>{'{{seo_title}}'}</code> and <code>{'{{meta_description}}'}</code> to follow this page’s published SEO text.</p></details>
   <form onSubmit={save}><fieldset disabled={busy || processing}>
    <label>Page slug<input value={form.slug} disabled={key==='home'} maxLength={80} onChange={e=>update('slug',e.target.value.toLowerCase())}/></label><small>{key==='home'?'The homepage stays at the website root.':'Old published slugs stay reserved and redirect to this page.'}</small>
-   <label>SEO title<input value={form.title} maxLength={120} onChange={e=>update('title',e.target.value)}/></label><small>{form.title.length} characters. About 50–60 is a writing guide, not a fixed Google limit.</small>
-   <label>Meta description<textarea rows={3} value={form.description} maxLength={320} onChange={e=>update('description',e.target.value)}/></label><small>{form.description.length} characters. Aim for a concise, specific summary. Blank fields use agent-specific defaults.</small>
+   <label>SEO title<input value={form.title} maxLength={120} onChange={e=>update('title',e.target.value)}/></label><small>{preview.title.length} characters after variables are filled. About 50–60 is a writing guide, not a fixed Google limit.</small>
+   <label>Meta description<textarea rows={3} value={form.description} maxLength={320} onChange={e=>update('description',e.target.value)}/></label><small>{preview.description.length} characters after variables are filled. Aim for a concise, specific summary. Fields you clear stay blank after saving. Use Restore default SEO text to bring back the templates.</small>
    <label>Focus keyword<input value={form.focus_keyword} maxLength={120} onChange={e=>update('focus_keyword',e.target.value)}/></label><p className="platform-help">Writing guidance only. We do not output a meta keywords tag.</p>
-   {form.focus_keyword && <p className="platform-help">Phrase in title: {preview.title.toLowerCase().includes(form.focus_keyword.toLowerCase())?'Yes':'Not yet'}. Phrase in description: {preview.description.toLowerCase().includes(form.focus_keyword.toLowerCase())?'Yes':'Not yet'}. Use it naturally in relevant page content too.</p>}
+   {form.focus_keyword && <p className="platform-help">Focus phrase: <strong>{focus}</strong>. Phrase in title: {preview.title.toLowerCase().includes(focus.toLowerCase())?'Yes':'Not yet'}. Phrase in description: {preview.description.toLowerCase().includes(focus.toLowerCase())?'Yes':'Not yet'}. Use it naturally in relevant page content too.</p>}
    <label>Content category (optional)<input value={form.category} maxLength={80} onChange={e=>update('category',e.target.value)}/></label><label>Content tags (comma-separated, optional)<input value={form.tags} maxLength={500} onChange={e=>update('tags',e.target.value)}/></label><p className="platform-help">Organization labels for this page. These do not create blog archives or act as ranking keywords.</p>
    <label className="seo-checkbox"><input type="checkbox" checked={form.noindex} onChange={e=>update('noindex',e.target.checked)}/> Hide this page from search results (noindex)</label><p className="platform-help">The page remains publicly accessible. It is removed from the sitemap. Search engines must recrawl it to see the change.</p>
    <h3>Social-sharing preview</h3><label>Social title<input value={form.social_title} maxLength={120} onChange={e=>update('social_title',e.target.value)}/></label><label>Social description<textarea rows={3} value={form.social_description} maxLength={320} onChange={e=>update('social_description',e.target.value)}/></label>

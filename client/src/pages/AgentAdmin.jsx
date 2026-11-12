@@ -11,6 +11,7 @@ import AgentContentEditor from '../components/AgentContentEditor.jsx';
 
 export default function AgentAdmin() {
   const syncVersion=useRef(0);
+  const [panel,setPanel]=useState('website');
   const [agent, setAgent] = useState(null);
   const [seoDirty,setSeoDirty]=useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
@@ -68,7 +69,7 @@ export default function AgentAdmin() {
     if ((editorDirty || seoDirty) && !window.confirm('Log out and discard your unsaved changes?')) return;
     setEditorDirty(false);
     setBusy(true); setError('');
-    try { await authRequest('/api/auth/logout', {}); setAgent(null); setPassword(''); }
+    try { await authRequest('/api/auth/logout', {}); setAgent(null); setPassword('');setSeoDirty(false);setPanel('website'); }
     catch (error) { setError(error.message); }
     finally { setBusy(false); }
   }
@@ -82,16 +83,23 @@ export default function AgentAdmin() {
     <header className="admin-topbar"><span className="admin-wordmark"><span>SA</span> Agent workspace</span>{agent && <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">View my website ↗</a>}</header>
     {checking ? <main className="admin-loading" role="status">Checking your session…</main> : agent ?
       <main className="admin-workspace">
-        <aside className="admin-sidebar"><span className="admin-label">WORKSPACE</span><a href="#/admin" aria-current="page">Website editor</a><a href={agentWebsiteHref(agent, 'about')} target="_blank" rel="noopener noreferrer">View About Me ↗</a><a href={agentWebsiteHref(agent, 'contact')} target="_blank" rel="noopener noreferrer">View Contact ↗</a><p>Signed in as<br/><strong>{agent.id}</strong></p><button onClick={logout} disabled={busy} className="admin-secondary">{busy ? 'Please wait…' : 'Log out'}</button></aside>
-        <section className="admin-overview"><span className="admin-label">YOUR AGENT PORTAL</span><h1>Welcome, {agent.name}.</h1><p>Manage your About Me page, contact details, and website images.</p>
+        <aside className="admin-sidebar"><span className="admin-label">WORKSPACE</span><nav aria-label="Agent workspace sections">
+          <button id="workspace-editor-nav" type="button" className="admin-section-link" aria-current={panel==='website'?'page':undefined} aria-controls="workspace-editor-panel" onClick={()=>setPanel('website')}>Website editor</button>
+          <button id="workspace-seo-nav" type="button" className="admin-section-link" aria-current={panel==='seo'?'page':undefined} aria-controls="workspace-seo-panel" onClick={()=>setPanel('seo')}>Site SEO</button>
+        </nav><p>Signed in as<br/><strong>{agent.id}</strong></p><button onClick={logout} disabled={busy} className="admin-secondary">{busy ? 'Please wait…' : 'Log out'}</button></aside>
+        <section className="admin-overview"><span className="admin-label">YOUR AGENT PORTAL</span><h1>{panel==='seo'?'Site SEO':`Welcome, ${agent.name}.`}</h1><p>{panel==='seo'?'Manage page titles, descriptions, URLs and social previews for your website.':'Manage your About Me page, contact details, and website images.'}</p>
           {error && <p role="alert" className="admin-error">{error}</p>}
+          <section id="workspace-editor-panel" className="admin-module-panel" aria-labelledby="workspace-editor-nav" hidden={panel!=='website'}>
           <div className="admin-account"><span className="admin-status">Signed in</span><h2>Account details</h2><dl><div><dt>Agent ID</dt><dd>{agent.id}</dd></div><div><dt>Role</dt><dd>Agent</dd></div><div><dt>Website ID</dt><dd>{agent.siteId}</dd></div></dl><p>Your website: <a href={agentWebsiteHref(agent)} target="_blank" rel="noopener noreferrer">{agentWebsiteHref(agent)}</a></p><button className="admin-secondary" onClick={refreshSession} disabled={busy}>Check session</button></div>
           {agentAdminHref(agent) && window.location.origin!==new URL(agentAdminHref(agent)).origin && <p className="admin-error" role="status">Your agent admin portal is <a href={agentAdminHref(agent)}>{agentAdminHref(agent)}</a>. Open it and sign in there to use your own website address. Your current unsaved edits are kept here until you leave.</p>}
           {!agent.websiteEnabled && <p className="admin-error" role="status">Your public website is disabled by the platform administrator. You can still edit and save your content here.</p>}
           {syncError && <p className="admin-error" role="alert">{syncError}</p>}
           <SubdomainEditor key={`subdomain-${agent.siteId}`} agent={agent} onChanged={domainChanged} />
           <AgentContentEditor key={agent.siteId} agent={agent} onDirtyChange={setEditorDirty} />
-          <SeoEditor key={`seo-${agent.siteId}`} agent={agent} onDirtyChange={setSeoDirty}/>
+          </section>
+          <section id="workspace-seo-panel" className="admin-module-panel" aria-labelledby="workspace-seo-nav" hidden={panel!=='seo'}>
+            <SeoEditor key={`seo-${agent.siteId}`} agent={agent} onDirtyChange={setSeoDirty}/>
+          </section>
         </section>
       </main> : <main className="admin-login-layout"><section className="admin-login-intro"><span className="admin-label">A SPACE FOR YOUR NEXT CHAPTER</span><h1>Your website.<br/>Your workspace.</h1><p>Sign in to your agent account to access your website dashboard.</p><div className="admin-intro-note">Agent portal · Online demo</div></section>
       <section className="admin-login-card"><span className="admin-label">AGENT ACCESS</span><h2>Welcome back.</h2><p>Enter the email and password created in Supabase Authentication.</p>
