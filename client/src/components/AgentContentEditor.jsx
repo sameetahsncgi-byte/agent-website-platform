@@ -115,7 +115,7 @@ export default function AgentContentEditor({ agent, onDirtyChange }) {
           </label>)}</div>
         </div>
       </fieldset>
-      <p className="editor-publish-note">Save & Publish saves all content sections. Enabled websites show the saved changes immediately. Your contact email is public and does not change your login email.</p>
+      <p className="editor-publish-note">Save & Publish saves all content sections. Enabled websites show the saved changes immediately. Contact form enquiries are sent to your saved public contact email. Changing it does not change your login email.</p>
       {error && <p className="admin-error" role="alert">{error}</p>}
       {message && <p className="editor-success" role="status">{message}</p>}
       <div className="editor-actions"><button className="admin-primary" type="submit" disabled={saving || processingImage || !dirty}>{saving ? 'Publishing…' : 'Save & Publish'}</button><button className="admin-secondary" type="button" onClick={discard} disabled={saving || processingImage || !dirty}>Discard changes</button><a href={agentWebsiteHref(agent, section === 'about' ? 'about' : 'contact')} target="_blank" rel="noopener noreferrer">View live page ↗</a></div>

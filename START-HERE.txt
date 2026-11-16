@@ -1,0 +1,79 @@
+AGENT CONTACT FORM EMAIL DELIVERY
+Based on current GitHub main baf8487 (seo section fixes).
+
+HOW IT WORKS
+Visitor submits an agent's contact page -> same website /api/contact -> spam check and website lookup -> email service -> agent's saved public contact email.
+The recipient comes from agent_site_content.email, the Public contact email under Website editor > Contact & branding. It is separate from the login email. After saving a new contact email, subsequent submissions use it automatically. No individual agent email-service setup is required.
+A shared verified sender sends the email. The visitor's address is Reply-To, so the agent can use Reply to respond to them.
+
+1. SET UP THE SHARED EMAIL SENDER
+Create/sign in to https://resend.com
+Under Domains, add a dedicated sending subdomain: notify.sncgi.com
+Add the exact DNS records Resend shows at the provider currently hosting DNS for sncgi.com. This may be GoDaddy or Vercel depending on your current nameservers. Use the record names/values from Resend, not guessed values. Preserve your existing email and website records.
+Wait until Resend marks the sending domain verified.
+Create an API key restricted to sending from this domain if that option is available.
+Use forms@notify.sncgi.com as CONTACT_FROM_EMAIL after notify.sncgi.com is verified. This address is an example sender; it does not require creating an inbox. Delivery goes to each agent's saved email.
+Resend test/default senders are restricted; use your verified domain for agent delivery.
+
+2. SET UP SPAM PROTECTION
+Go to https://dash.cloudflare.com -> Turnstile -> Add widget.
+Use Managed mode. Add these hostnames (without https or *):
+  brokerage.sncgi.com
+  agent-website-platform.vercel.app
+Adding brokerage.sncgi.com authorizes its agent subdomains too. You do not need to move DNS to Cloudflare.
+For independent custom domains outside brokerage.sncgi.com, add the actual domain to this widget before enabling its contact form. Follow the widget's hostname limits; use another widget/configuration if you outgrow them.
+Copy the public Site key and private Secret key into Vercel as below. Never use Cloudflare test keys in production.
+
+3. ADD VERCEL ENVIRONMENT VARIABLES
+Project -> Settings -> Environment Variables -> Production:
+RESEND_API_KEY = your Resend sending API key
+CONTACT_FROM_EMAIL = forms@notify.sncgi.com
+TURNSTILE_SECRET_KEY = your private Turnstile secret key
+VITE_TURNSTILE_SITE_KEY = your public Turnstile site key
+CONTACT_DAILY_LIMIT = 90 (optional; shared daily cap across the platform)
+
+Keep your existing SUPABASE_URL and SUPABASE_SECRET_KEY variables. The latter must be the server-only secret/service_role key, not the publishable/anon key. Keep other existing variables including APP_URL unchanged.
+Never add VITE_ to RESEND_API_KEY, TURNSTILE_SECRET_KEY or SUPABASE_SECRET_KEY. Do not paste private keys into chat or commit them into Git.
+The daily cap is an application limit, not a statement of your provider plan allowance. Check your Resend account's actual quota and adjust the cap as needed. Limits are shared by all agents.
+
+4. RUN SUPABASE SETUP
+In the project's Supabase SQL Editor, run the included supabase/setup-contact-email.sql.
+It creates private server-only rate counters: 5 accepted attempts per visitor IP per 10-minute fixed window; 30 per website per hourly fixed window; and CONTACT_DAILY_LIMIT across the platform per UTC day. Failed mail attempts after spam verification count toward the limit too. Rerunning the SQL does not reset counters.
+The table stores hashed IP identifiers and counters, not raw IPs or enquiry messages. Old counters are cleaned up during subsequent submissions. Email contents and delivery records are processed/stored by Resend and the recipient's mail provider.
+No existing agent accounts or SEO data are changed.
+
+5. COPY FILES AND DEPLOY
+Merge the included client/ files into the matching project folders, replacing matching files. Do not delete your src folder. New files must be added too.
+Push to GitHub and redeploy Vercel after setting the environment variables. VITE_TURNSTILE_SITE_KEY is embedded during the build, so adding it requires a new deployment.
+Vercel project Root Directory remains client. The included vercel.json preserves existing routes and sets the contact function duration to 60 seconds. No npm dependency changes are needed.
+The Express development server does not host this new Vercel function. Test email delivery on the deployed production site. Local browser development alone will not send mail.
+
+6. TEST WITH TWO WEBSITES
+Use agent admin > Website editor > Contact & branding and set the first agent's Public contact email to an inbox you control. Save & Publish.
+Open their public /contact page, complete the security check, and submit a clearly labeled test enquiry. Check inbox and spam. Reply to the email: the recipient should be the visitor's address.
+Repeat on a second website with a different saved contact email. Confirm each enquiry reaches only its intended agent.
+Change an agent's saved public contact email and verify the next enquiry uses the new address.
+Disabled websites and old/unmapped hostnames cannot send enquiries.
+Success means Resend accepted the email for sending; it does not guarantee inbox delivery. For missing mail, check the Resend email delivery logs and sender verification. The application does not yet have delivery webhooks or a saved leads inbox.
+If keys/setup are missing or delivery fails, the visitor sees an error and their form entries remain available. No false success is shown. The form is disabled until its security check completes.
+
+WHAT IS INCLUDED
+client/api/contact.js
+client/server/contact.js
+client/src/pages/Contact.jsx
+client/src/components/ContactSecurity.jsx
+client/src/components/AgentContentEditor.jsx
+client/src/styles/Contact.css
+client/vercel.json
+client/tests/contact-email.test.mjs
+supabase/setup-contact-email.sql
+
+VALIDATION
+Production client + SSR build passed. All 87 automated tests passed, including 15 new contact API tests. Local database checks passed for SQL installation, service-only permissions, IP/site/global limits and safe reruns. DOM interaction checks passed for token handling, submission, busy button, failure preserving the message, success and starting a new message.
+No real email was sent, no credentials were configured and no deployment was performed. Final delivery testing requires your configured production account.
+
+REFERENCES
+https://resend.com/docs/api-reference/emails/send-email
+https://resend.com/docs/dashboard/domains/introduction
+https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
+https://developers.cloudflare.com/turnstile/additional-configuration/hostname-management/
